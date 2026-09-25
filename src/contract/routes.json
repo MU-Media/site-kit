@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "pages": [
+    "/",
+    "/[*]/[*]",
+    "/kategori/[*]",
+    "/yazar/[*]",
+    "/hakkimizda",
+    "/iletisim",
+    "/gizlilik",
+    "/kvkk",
+    "/cerez-politikasi",
+    "/bulten/onaylandi",
+    "/bulten/ayrildi"
+  ],
+  "routes": [
+    "/sitemap.xml",
+    "/sitemap-posts.xml",
+    "/news-sitemap.xml",
+    "/rss.xml",
+    "/robots.txt",
+    "/llms.txt",
+    "/ads.txt",
+    "/api/revalidate",
+    "/api/newsletter"
+  ],
+  "markers": [
+    { "id": "proxy-410", "file": "proxy", "must": "goneProxy", "why": "geri çekilen yazılar 410 dönmeli" },
+    { "id": "consent-defaults", "anywhere": "ConsentDefaultsScript", "why": "Consent Mode v2 varsayılanları (her şey reddedilmiş başlar)" },
+    { "id": "consent-provider", "anywhere": "ConsentProvider", "why": "GA4/AdSense sadece onayla yüklenir" },
+    { "id": "consent-banner", "anywhere": "ConsentBanner", "why": "KVKK çerez onayı penceresi" },
+    { "id": "consent-link", "anywhere": "ConsentSettingsLink", "why": "footer'da 'Çerez ayarları'" },
+    { "id": "newsletter-form", "anywhere": "NewsletterForm", "why": "her sitede bülten kaydı" },
+    { "id": "article-jsonld", "anywhere": "articleLd", "why": "yazı sayfasında JSON-LD" }
+  ]
+}

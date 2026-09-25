@@ -1,0 +1,24 @@
+/*
+ * site-kit taban stilleri: sadece işlev için gereken en az kural (erişilebilirlik, konumlandırma).
+ * Renk, yazı tipi ve görünüm sitenin tasarımına aittir; bu dosyayı içe aktardıktan sonra ez.
+ * Kullanılan değişkenler (varsa): --ne-surface, --ne-ink, --ne-line, --ne-accent, --ne-accent-ink, --ne-radius
+ */
+.ne-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ne-linklike { font: inherit; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; text-decoration: underline; }
+
+.ne-consent { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 1000; max-width: 640px; margin: 0 auto; padding: 16px;
+  background: var(--ne-surface, #fff); color: var(--ne-ink, #111); border: 1px solid var(--ne-line, #ddd); border-radius: var(--ne-radius, 10px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.18); font-size: .95rem; }
+.ne-consent p { margin: 0 0 12px; }
+.ne-consent-settings { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }
+.ne-consent-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ne-consent-actions button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--ne-line, #ccc); background: transparent; color: inherit; cursor: pointer; }
+.ne-consent-actions button.primary { background: var(--ne-accent, #111); border-color: var(--ne-accent, #111); color: var(--ne-accent-ink, #fff); }
+
+.ne-newsletter form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ne-newsletter input[type="email"] { flex: 1 1 220px; min-width: 0; }
+.ne-newsletter label:has(input[type="checkbox"]) { flex-basis: 100%; display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; }
+
+.ne-legal table { width: 100%; border-collapse: collapse; }
+.ne-legal th, .ne-legal td { text-align: left; border-bottom: 1px solid var(--ne-line, #ddd); padding: 6px 4px; vertical-align: top; }
+.ne-disclosure { font-size: .9rem; opacity: .8; }

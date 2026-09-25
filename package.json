@@ -1,0 +1,59 @@
+{
+  "name": "@mu-media/site-kit",
+  "version": "0.1.0",
+  "description": "MU-Media sitelerinin ortak paketi: engine API istemcisi, SEO/GEO, feed'ler, çerez onayı, bülten, sözleşme denetimi",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./config": "./src/config.ts",
+    "./seo": "./src/seo/index.ts",
+    "./routes": "./src/routes/index.ts",
+    "./components": "./src/components/index.ts",
+    "./contract": "./src/contract/index.ts",
+    "./markdown": "./src/markdown.ts",
+    "./styles.css": "./src/styles.css",
+    "./proxy": "./src/proxy.ts"
+  },
+  "bin": {
+    "site-kit": "./bin/site-kit.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "scripts",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "mock": "node scripts/mock-engine.mjs"
+  },
+  "dependencies": {
+    "isomorphic-dompurify": "^2.26.0",
+    "marked": "^16.3.0"
+  },
+  "peerDependencies": {
+    "next": ">=16.3.0",
+    "react": ">=19.2.0",
+    "react-dom": ">=19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "next": "16.3.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
