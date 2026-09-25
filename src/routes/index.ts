@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createEngineClient, EMPTY_PAGE, EMPTY_SITEMAP, fallbackSite, orFallback, TAGS, type EngineClient } from "../client";
 import { absUrl, siteEnv, type SiteEnv } from "../config";
@@ -199,11 +199,22 @@ export function clientIp(req: Request): string | undefined {
 }
 
 /**
+ * Ziyaretçi IP'sini engine'e imzalı iletir. Engine'in gördüğü IP bu sitenin sunucusudur;
+ * imza olmadan bütün ziyaretçiler aynı hız sınırını paylaşırdı (engine kod incelemesi #2).
+ * İmza: HMAC-SHA256(NE_REVALIDATE_SECRET, "<site>.<ip>.<unix saniye>"), engine 5 dk içinde kabul eder.
+ */
+export function signedIpHeaders(site: string, ip: string, secret: string | undefined, nowS = Math.floor(Date.now() / 1000)): Record<string, string> {
+  if (!secret) return { "x-forwarded-for": ip };
+  const sig = createHmac("sha256", secret).update(`${site}.${ip}.${nowS}`).digest("hex");
+  return { "x-forwarded-for": ip, "x-ne-client-ip": ip, "x-ne-ts": String(nowS), "x-ne-sig": sig };
+}
+
+/**
  * POST /api/newsletter: aynı kökenden form gönderimi → engine subscribe.
  * Bal küpü (hp) doluysa engine'e gitmeden sahte "pending" döner (bot).
  */
 export const newsletterProxy = (deps?: RouteDeps) => async (req: Request) => {
-  const { client } = ctx(deps);
+  const { client, env } = ctx(deps);
   let raw: unknown;
   try {
     raw = await req.json();
@@ -215,7 +226,7 @@ export const newsletterProxy = (deps?: RouteDeps) => async (req: Request) => {
   if (v.value.hp) return Response.json({ status: "pending" });
   const ip = clientIp(req);
   try {
-    const { httpStatus, data } = await client.subscribe(v.value, ip ? { "x-forwarded-for": ip } : {});
+    const { httpStatus, data } = await client.subscribe(v.value, ip ? signedIpHeaders(env.site, ip, env.revalidateSecret) : {});
     if (httpStatus === 429) return Response.json({ error: data.error ?? "Çok fazla deneme. Biraz sonra tekrar dene." }, { status: 429 });
     if (httpStatus === 403) return Response.json({ error: data.error ?? "Bu sitede bülten şu an kapalı." }, { status: 403 });
     if (httpStatus >= 400) return Response.json({ error: data.error ?? "Kayıt şu an alınamadı." }, { status: httpStatus >= 500 ? 502 : httpStatus });

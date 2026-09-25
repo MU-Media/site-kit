@@ -1,6 +1,6 @@
 {
   "name": "@mu-media/site-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MU-Media sitelerinin ortak paketi: engine API istemcisi, SEO/GEO, feed'ler, çerez onayı, bülten, sözleşme denetimi",
   "license": "MIT",
   "type": "module",

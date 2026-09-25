@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createEngineClient } from "../src/client";
 import { adsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
@@ -57,7 +58,12 @@ describe("bülten", () => {
     const ok = await h(post({ email: "a@b.co", consent: true }));
     expect(await ok.json()).toEqual({ status: "pending" });
     const call = f.mock.calls.find((c) => String(c[0]).endsWith("/subscribe"))!;
-    expect(new Headers(call[1]!.headers).get("x-forwarded-for")).toBe("1.2.3.4");
+    const sent = new Headers(call[1]!.headers);
+    expect(sent.get("x-forwarded-for")).toBe("1.2.3.4");
+    // ziyaretçi IP'si site sırrıyla imzalı gider (engine hız sınırı için)
+    expect(sent.get("x-ne-client-ip")).toBe("1.2.3.4");
+    const ts = sent.get("x-ne-ts")!;
+    expect(sent.get("x-ne-sig")).toBe(createHmac("sha256", env.revalidateSecret!).update(`pokemon.1.2.3.4.${ts}`).digest("hex"));
     const limited = newsletterProxy(deps(vi.fn(async () => json(429, { error: "çok" })) as any));
     expect((await limited(post({ email: "a@b.co", consent: true }))).status).toBe(429);
   });
