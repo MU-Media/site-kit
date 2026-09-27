@@ -32,6 +32,8 @@ describe("canlı denetim", () => {
       if (p.endsWith(".xml")) return page(200, "<x/>", "application/xml");
       if (p.endsWith(".txt")) return page(p === "/ads.txt" ? 404 : 200, "x", "text/plain");
       if (p === "/tcg/a") return page(200, `<script type="application/ld+json">{"@graph":[]}</script><section data-ne-newsletter="">`);
+      // bozuk site: yazı rotası modülü yüklenemiyor (site-kit#1) → her yazı yolu 500
+      if (p === "/ne-denetim/olmayan-yazi-404") return page(broken ? 500 : 404, "");
       return page(200, "ok");
     };
   }
@@ -39,8 +41,8 @@ describe("canlı denetim", () => {
     const r = await checkLive("https://s.test", site(false) as any);
     expect(r.problems).toEqual([]);
   });
-  it("bozuk site: revalidate 401 dönmüyor ve ana sayfada bülten yok", async () => {
+  it("bozuk site: revalidate 401 dönmüyor, ana sayfada bülten yok, yazı rotası 500", async () => {
     const r = await checkLive("https://s.test", site(true) as any);
-    expect(r.problems.map((p: any) => p.id).sort()).toEqual(["live:newsletter", "live:revalidate-401"]);
+    expect(r.problems.map((p: any) => p.id).sort()).toEqual(["live:article-route", "live:newsletter", "live:revalidate-401"]);
   });
 });

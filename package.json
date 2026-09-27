@@ -1,6 +1,6 @@
 {
   "name": "@mu-media/site-kit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MU-Media sitelerinin ortak paketi: engine API istemcisi, SEO/GEO, feed'ler, çerez onayı, bülten, sözleşme denetimi",
   "license": "MIT",
   "type": "module",
@@ -36,8 +36,9 @@
     "mock": "node scripts/mock-engine.mjs"
   },
   "dependencies": {
-    "isomorphic-dompurify": "^2.26.0",
-    "marked": "^16.3.0"
+    "marked": "^16.3.0",
+    "sanitize-html": "^2.17.0",
+    "@types/sanitize-html": "^2.16.1"
   },
   "peerDependencies": {
     "next": ">=16.3.0",

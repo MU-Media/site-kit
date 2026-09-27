@@ -93,6 +93,11 @@ export async function checkLive(base, fetchImpl = fetch) {
   const nl = await get("/api/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "gecersiz" }) });
   expect("live:newsletter-400", nl.r?.status === 400, `/api/newsletter geçersiz gövdeye ${nl.r?.status} döndü (400 olmalı)`);
 
+  // Yazı rotasının modülü yüklenebiliyor mu? Yayınlanmış yazı olmasa da denetlenir: olmayan yazı 404 dönmeli.
+  // 500 = rota modülü yüklenemiyor (site-kit#1: jsdom ESM zinciri Vercel'de her yazı sayfasını düşürüyordu).
+  const missing = await get("/ne-denetim/olmayan-yazi-404");
+  expect("live:article-route", missing.r?.status === 404, `yazı rotası olmayan yazıya ${missing.r?.status} döndü (404 olmalı; 500 ise rota modülü yüklenemiyor)`);
+
   // RSS'ten ilk yazıyı bul, JSON-LD ve bülten formunu kontrol et
   const rss = await get("/rss.xml");
   const link = rss.body.match(/<item>[\s\S]*?<link>([^<]+)<\/link>/)?.[1];
