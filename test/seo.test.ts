@@ -41,3 +41,12 @@ describe("proxy yol eşleştirme", () => {
     expect(isArticlePath("/tcg/delta/x")).toBeNull();
   });
 });
+
+import { rootMetadata } from "../src/seo";
+describe("arama motoru doğrulaması (rootMetadata)", () => {
+  it("engine kodu verirse Google ve Bing meta etiketi gelir, vermezse hiç alan yok", () => {
+    const m = rootMetadata({ ...site, verification: { google: "g-kod", bing: "b-kod" } }, "https://ornek.com");
+    expect(m.verification).toEqual({ google: "g-kod", other: { "msvalidate.01": "b-kod" } });
+    expect(rootMetadata(site, "https://ornek.com").verification).toBeUndefined();
+  });
+});

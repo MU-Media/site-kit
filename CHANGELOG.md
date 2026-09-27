@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.4 (27 Eyl 2026)
+- `PublicSite.verification` (google, bing): `rootMetadata` Search Console ve Bing Webmaster doğrulama meta etiketlerini basar. Engine `ne search:connect` kodu alır, doğrular, sahip ekler, sitemap gönderir; yeni sitede elle iş yok.
+
 ## 0.1.3 (27 Eyl 2026)
 - Yazı gövdesindeki tablolar `.ne-table` kutusuna sarılır (`overflow-x: auto`, tablo en az 36rem, klavyeyle odaklanabilir). Mobilde geniş tablonun son sütunları kesiliyordu.
 

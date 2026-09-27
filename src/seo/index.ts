@@ -18,6 +18,11 @@ export function rootMetadata(site: PublicSite, siteUrl: string): Metadata {
     openGraph: { type: "website", siteName: site.name, locale: ogLocale(site.locale) },
     twitter: { card: "summary_large_image" },
     robots: { index: true, follow: true, "max-image-preview": "large" },
+    // Search Console / Bing Webmaster sahiplik doğrulaması: engine kodu verir, her sayfanın <head>'ine girer.
+    // Yeni sitede elle HTML dosyası ya da DNS kaydı gerekmez.
+    ...(site.verification?.google || site.verification?.bing
+      ? { verification: { ...(site.verification.google ? { google: site.verification.google } : {}), ...(site.verification.bing ? { other: { "msvalidate.01": site.verification.bing } } : {}) } }
+      : {}),
   };
 }
 

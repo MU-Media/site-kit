@@ -14,6 +14,8 @@ export interface PublicSite {
   categories: { slug: string; name: string; description?: string }[];
   authors: { slug: string; name: string; bio?: string; avatarUrl?: string; persona: boolean }[];
   organization: { name: string; logo?: string; sameAs: string[] };
+  /** Arama motoru doğrulama kodları (engine `ne search:connect` doldurur); rootMetadata meta etiketi basar */
+  verification?: { google?: string; bing?: string };
   analytics: { ga4MeasurementId?: string };
   ads: { adsensePublisherId?: string };
   legal: { controllerName?: string; address?: string; personaDisclosure: boolean };
