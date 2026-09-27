@@ -5,7 +5,8 @@ describe("renderMarkdown (sanitize-html, jsdom yok: site-kit#1)", () => {
   it("gfm tablo, başlık, liste ve dış link yeni sekmede", () => {
     const html = renderMarkdown("## Başlık\n\n- a\n- b\n\n| x | y |\n|---|---|\n| 1 | 2 |\n\n[kaynak](https://ornek.com/a)");
     expect(html).toContain("<h2>Başlık</h2>");
-    expect(html).toContain("<table>");
+    expect(html).toContain('<div class="ne-table" role="region" aria-label="Tablo" tabindex="0"><table>');
+    expect(html).toContain("</table></div>");
     expect(html).toContain('<a href="https://ornek.com/a" target="_blank" rel="noopener">kaynak</a>');
   });
   it("zararlı içerik atılır: script, javascript: link, onerror, iframe", () => {

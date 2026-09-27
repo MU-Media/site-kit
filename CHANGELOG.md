@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.3 (27 Eyl 2026)
+- Yazı gövdesindeki tablolar `.ne-table` kutusuna sarılır (`overflow-x: auto`, tablo en az 36rem, klavyeyle odaklanabilir). Mobilde geniş tablonun son sütunları kesiliyordu.
+
 ## 0.1.2 (27 Eyl 2026)
 - `renderMarkdown` temizlemeyi `sanitize-html` ile yapar; `isomorphic-dompurify`/jsdom kaldırıldı. jsdom'un ESM-only alt bağımlılıkları Vercel'de yazı sayfasını her istekte 500'e düşürüyordu (#1). Çıktı aynı; `<script>`, `javascript:` linkleri, `on*` özellikleri, `iframe` atılır.
 - `readingMinutes` bağımlılıksız `util/reading.ts`'te (`/markdown`'dan da dışa aktarılır). `SourceList` ve `FaqList` ayrı dosyada (`ArticleParts.tsx`); birini içe aktarmak Markdown kütüphanelerini yüklemez.

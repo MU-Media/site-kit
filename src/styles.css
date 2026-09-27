@@ -22,3 +22,8 @@
 .ne-legal table { width: 100%; border-collapse: collapse; }
 .ne-legal th, .ne-legal td { text-align: left; border-bottom: 1px solid var(--ne-line, #ddd); padding: 6px 4px; vertical-align: top; }
 .ne-disclosure { font-size: .9rem; opacity: .8; }
+
+/* Yazı gövdesindeki tablolar: dar ekranda kutu içinde yana kayar, sütunlar okunmaz derecede daralmaz */
+.ne-table { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.ne-table > table { min-width: 36rem; }
+.ne-table:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

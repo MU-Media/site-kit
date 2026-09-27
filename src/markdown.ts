@@ -25,7 +25,14 @@ const OPTIONS: sanitizeHtml.IOptions = {
 export function renderMarkdown(md: string): string {
   const html = marked.parse(md, { async: false, gfm: true }) as string;
   const clean = sanitizeHtml(html, OPTIONS);
-  return clean.replace(/<a href="(https?:\/\/[^"]+)"/g, '<a href="$1" target="_blank" rel="noopener"');
+  return (
+    clean
+      .replace(/<a href="(https?:\/\/[^"]+)"/g, '<a href="$1" target="_blank" rel="noopener"')
+      // Tablolar yana kayan bir kutuda: mobilde geniş tablo sütun kesmesin (27 Eyl: 5 sütunlu fiyat tablosunun
+      // "Fiyat" sütunu 390 px'te kesiliyordu). Klavyeyle kaydırılabilsin diye odaklanabilir bölge.
+      .replace(/<table>/g, '<div class="ne-table" role="region" aria-label="Tablo" tabindex="0"><table>')
+      .replace(/<\/table>/g, "</table></div>")
+  );
 }
 
 export { readingMinutes } from "./util/reading";
