@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.5 (28 Eyl 2026)
+- `PublicSite.featured`: panelden seçilen sabit öne çıkan yazının özeti (yayında değilse `null`). Ana sayfa `site.featured ?? en yeni yazı` ile öne çıkanı seçer; akıştan aynı yazı çıkarılır.
+
 ## 0.1.4 (27 Eyl 2026)
 - `PublicSite.verification` (google, bing): `rootMetadata` Search Console ve Bing Webmaster doğrulama meta etiketlerini basar. Engine `ne search:connect` kodu alır, doğrular, sahip ekler, sitemap gönderir; yeni sitede elle iş yok.
 
