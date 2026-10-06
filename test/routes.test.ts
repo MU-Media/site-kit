@@ -77,6 +77,8 @@ describe("feed'ler", () => {
     expect(body).toContain("<title>Delta &lt;Reign&gt;</title>");
     expect(body).toContain("<link>https://ornek.com/tcg/delta</link>");
     expect(body).toContain("<title>Ornek &amp; Co</title>");
+    // v0.1.7: WebSub hub ilanı (engine yayında hub'a bildirir)
+    expect(body).toContain('<atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>');
   });
   it("sitemap-posts statik sayfaları ve yazıları içerir", async () => {
     const body = await (await sitemapPosts(deps())()).text();

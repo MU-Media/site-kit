@@ -11,6 +11,9 @@ import { lang, textResponse, xmlEscape, xmlResponse } from "../util/xml";
  *   export const GET = rss();
  * Bağımlılıklar test için enjekte edilebilir; varsayılan ortam değişkenleridir.
  */
+/** WebSub hub'ı (Google'ın işlettiği): engine yayında buraya "besleme güncellendi" bildirir; besleme hub'ı ilan eder (v0.1.7) */
+export const WEBSUB_HUB = "https://pubsubhubbub.appspot.com/";
+
 export interface RouteDeps {
   env?: SiteEnv;
   client?: EngineClient;
@@ -84,6 +87,7 @@ export const rss = (deps?: RouteDeps) => async () => {
   <description>${xmlEscape(s.description)}</description>
   <language>${lang(s.locale)}</language>
   <atom:link href="${abs("/rss.xml")}" rel="self" type="application/rss+xml"/>
+  <atom:link href="${WEBSUB_HUB}" rel="hub"/>
 ${page.docs
   .map((a) => {
     const url = xmlEscape(abs(`/${a.category.slug}/${a.slug}`));

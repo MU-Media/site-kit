@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.7 (6 Eki 2026)
+- RSS beslemesi WebSub hub'ını ilan eder (`<atom:link rel="hub">`, `WEBSUB_HUB` = Google'ın pubsubhubbub.appspot.com'u). Engine yazı yayınlanınca hub'a bildirir; Google yeni yazıyı sitemap'i beklemeden öğrenir.
+
 ## 0.1.6 (6 Eki 2026)
 - `profilePageLd`: yazar sayfası için Google'ın önerdiği ProfilePage, ana varlık Person (`@id` = `/yazar/<slug>#person`; isteğe bağlı `jobTitle`, `knowsAbout`, `sameAs`). `personLd` aynı alanları alır.
 - `articleLd`: yazar Person'u aynı `@id`'yi taşır; Google yazıyla profil sayfasını tek kişi olarak eşler.
