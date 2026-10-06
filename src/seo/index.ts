@@ -125,7 +125,7 @@ export function articleLd(site: PublicSite, siteUrl: string, a: Article) {
       articleSection: a.category.name,
       ...(img ? { image: [img.startsWith("http") ? img : absUrl(siteUrl, img)] } : {}),
       author: a.author
-        ? { "@type": "Person", name: a.author.name, url: absUrl(siteUrl, `/yazar/${a.author.slug}`) }
+        ? { "@type": "Person", "@id": absUrl(siteUrl, `/yazar/${a.author.slug}#person`), name: a.author.name, url: absUrl(siteUrl, `/yazar/${a.author.slug}`) }
         : { "@id": absUrl(siteUrl, "/#organization") },
       publisher: { "@id": absUrl(siteUrl, "/#organization") },
       ...(a.sources?.length ? { citation: a.sources.map((s) => s.url) } : {}),
@@ -141,13 +141,34 @@ export function articleLd(site: PublicSite, siteUrl: string, a: Article) {
   return { "@context": "https://schema.org", "@graph": graph };
 }
 
-export function personLd(site: PublicSite, siteUrl: string, author: { name: string; slug: string; bio?: string }) {
+export interface AuthorLdInput { name: string; slug: string; bio?: string; jobTitle?: string; knowsAbout?: string[]; sameAs?: string[] }
+
+/**
+ * Yazar sayfası: Google'ın yazar/profil sayfaları için önerdiği ProfilePage, ana varlık Person (yazıdaki
+ * author.url bu sayfayı gösterir, iki uç birbirine bağlanır). v0.1.6.
+ */
+export function profilePageLd(site: PublicSite, siteUrl: string, author: AuthorLdInput, opts: { dateModified?: string } = {}) {
+  const person = personLd(site, siteUrl, author);
+  const { "@context": _ctx, ...mainEntity } = person;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    url: absUrl(siteUrl, `/yazar/${author.slug}`),
+    ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
+    mainEntity: { ...mainEntity, "@id": absUrl(siteUrl, `/yazar/${author.slug}#person`) },
+  };
+}
+
+export function personLd(site: PublicSite, siteUrl: string, author: AuthorLdInput) {
   return {
     "@context": "https://schema.org",
     "@type": "Person",
     name: author.name,
     url: absUrl(siteUrl, `/yazar/${author.slug}`),
     ...(author.bio ? { description: author.bio } : {}),
+    ...(author.jobTitle ? { jobTitle: author.jobTitle } : {}),
+    ...(author.knowsAbout?.length ? { knowsAbout: author.knowsAbout } : {}),
+    ...(author.sameAs?.length ? { sameAs: author.sameAs } : {}),
     worksFor: { "@type": "Organization", name: site.organization.name || site.name, url: absUrl(siteUrl, "/") },
   };
 }

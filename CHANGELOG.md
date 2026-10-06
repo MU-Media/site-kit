@@ -1,5 +1,9 @@
 # Değişiklik günlüğü
 
+## 0.1.6 (6 Eki 2026)
+- `profilePageLd`: yazar sayfası için Google'ın önerdiği ProfilePage, ana varlık Person (`@id` = `/yazar/<slug>#person`; isteğe bağlı `jobTitle`, `knowsAbout`, `sameAs`). `personLd` aynı alanları alır.
+- `articleLd`: yazar Person'u aynı `@id`'yi taşır; Google yazıyla profil sayfasını tek kişi olarak eşler.
+
 ## 0.1.5 (28 Eyl 2026)
 - `PublicSite.featured`: panelden seçilen sabit öne çıkan yazının özeti (yayında değilse `null`). Ana sayfa `site.featured ?? en yeni yazı` ile öne çıkanı seçer; akıştan aynı yazı çıkarılır.
 

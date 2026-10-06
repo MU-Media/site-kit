@@ -50,3 +50,16 @@ describe("arama motoru doğrulaması (rootMetadata)", () => {
     expect(rootMetadata(site, "https://ornek.com").verification).toBeUndefined();
   });
 });
+
+describe("profilePageLd (v0.1.6): yazar sayfası ProfilePage + Person, yazının author'ı aynı @id", () => {
+  it("ProfilePage, mainEntity Person; jobTitle/knowsAbout yalnızca verilirse", async () => {
+    const { profilePageLd } = await import("../src/seo/index.js");
+    const site = { name: "Tall Grass", organization: { name: "Tall Grass" } } as any;
+    const ld = profilePageLd(site, "https://tallgrass.world", { name: "Uluç", slug: "uluc", bio: "b", jobTitle: "Kurucu", knowsAbout: ["Pokémon TCG"] }) as any;
+    expect(ld["@type"]).toBe("ProfilePage");
+    expect(ld.mainEntity).toMatchObject({ "@type": "Person", "@id": "https://tallgrass.world/yazar/uluc#person", name: "Uluç", jobTitle: "Kurucu", knowsAbout: ["Pokémon TCG"] });
+    expect(ld.mainEntity["@context"]).toBeUndefined();
+    const bare = profilePageLd(site, "https://tallgrass.world", { name: "Deniz", slug: "deniz" }) as any;
+    expect(bare.mainEntity.jobTitle).toBeUndefined();
+  });
+});
