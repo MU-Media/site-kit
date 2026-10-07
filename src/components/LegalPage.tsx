@@ -19,6 +19,11 @@ export const LEGAL_TITLES: Record<LegalKind, string> = {
 };
 
 const pending = (v?: string) => v?.trim() || "[Güncellenecek]";
+/**
+ * Adres yalnızca girildiyse ya da veri sorumlusu hiç tanımlanmadıysa (yeni site, eksik fark edilsin) gösterilir. Gerçek
+ * kişi veri sorumlusu ev adresini yayınlamak zorunda değil; kimlik + e-posta başvuru kanalı yeter (v0.1.9).
+ */
+const showAddress = (s: PublicSite) => Boolean(s.legal?.address?.trim()) || !s.legal?.controllerName?.trim();
 const hasAnalytics = (s: PublicSite) => Boolean(s.analytics?.ga4MeasurementId);
 const hasAds = (s: PublicSite) => Boolean(s.ads?.adsensePublisherId);
 const hasStats = (s: PublicSite) => Boolean(s.analytics?.umamiWebsiteId);
@@ -92,7 +97,7 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
         <h2>Tercihlerini değiştirmek</h2>
         <p>Sayfanın altındaki "Çerez ayarları" bağlantısıyla onayını istediğin zaman geri alabilir ya da değiştirebilirsin.</p>
         <h2>Veri sorumlusu ve iletişim</h2>
-        <p>{pending(site.legal?.controllerName)}, {pending(site.legal?.address)}. E-posta: <Contact site={site} /></p>
+        <p>{pending(site.legal?.controllerName)}{showAddress(site) ? `, ${pending(site.legal?.address)}` : ""}. E-posta: <Contact site={site} /></p>
       </>
     );
   }
@@ -105,7 +110,7 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
         <Updated />
         <p>6698 sayılı Kişisel Verilerin Korunması Kanunu'nun ("KVKK") 10. maddesi uyarınca, {d} adresindeki {site.name} sitesini ziyaret edenlerin kişisel verilerinin işlenmesine ilişkin bilgiler aşağıdadır.</p>
         <h2>1. Veri sorumlusu</h2>
-        <p>{pending(site.legal?.controllerName)}<br />Adres: {pending(site.legal?.address)}<br />E-posta: <Contact site={site} /></p>
+        <p>{pending(site.legal?.controllerName)}{showAddress(site) ? <><br />Adres: {pending(site.legal?.address)}</> : null}<br />E-posta: <Contact site={site} /></p>
         <h2>2. İşlenen kişisel veriler</h2>
         <ul>
           <li>İşlem güvenliği verileri: IP adresi, tarayıcı ve cihaz bilgisi, ziyaret zamanı (sunucu kayıtları)</li>

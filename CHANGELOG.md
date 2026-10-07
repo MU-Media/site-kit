@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.9 (7 Eki 2026)
+- Yasal sayfalar: veri sorumlusu tanımlıysa ve adres girilmediyse adres satırı hiç gösterilmez (gerçek kişi ev adresini yayınlamak zorunda değil; kimlik + e-posta başvuru kanalı). Veri sorumlusu tanımsızsa "[Güncellenecek]" uyarısı kalır.
+
 ## 0.1.8 (7 Eki 2026)
 - `CookielessStats`: çerezsiz, kimliksiz ziyaret sayacı (Umami, kendi sunucumuzda); `PublicSite.analytics.umamiWebsiteId`. Onay gerektirmez; script ve gönderim sitenin kendi alan adından (`/_s/*` yönlendirmesi, site next.config). Yasal sayfalar (gizlilik, KVKK, çerez) tanımlıysa bunu anlatır.
 
