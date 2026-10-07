@@ -18,7 +18,8 @@ export interface PublicSite {
   featured?: ArticleSummary | null;
   /** Arama motoru doğrulama kodları (engine `ne search:connect` doldurur); rootMetadata meta etiketi basar */
   verification?: { google?: string; bing?: string };
-  analytics: { ga4MeasurementId?: string };
+  /** umamiWebsiteId (v0.1.8): çerezsiz, kimliksiz ziyaret sayacı (kendi sunucumuzda Umami); onay gerektirmez */
+  analytics: { ga4MeasurementId?: string; umamiWebsiteId?: string };
   ads: { adsensePublisherId?: string };
   legal: { controllerName?: string; address?: string; personaDisclosure: boolean };
   contactEmail?: string;

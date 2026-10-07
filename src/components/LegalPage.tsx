@@ -21,6 +21,7 @@ export const LEGAL_TITLES: Record<LegalKind, string> = {
 const pending = (v?: string) => v?.trim() || "[Güncellenecek]";
 const hasAnalytics = (s: PublicSite) => Boolean(s.analytics?.ga4MeasurementId);
 const hasAds = (s: PublicSite) => Boolean(s.ads?.adsensePublisherId);
+const hasStats = (s: PublicSite) => Boolean(s.analytics?.umamiWebsiteId);
 const hasNewsletter = (s: PublicSite) => s.newsletter?.enabled !== false;
 
 function Contact({ site }: { site: PublicSite }) {
@@ -77,6 +78,7 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
           <li><b>Teknik kayıtlar:</b> Siteyi sunan altyapı, güvenlik ve hata takibi için IP adresi, tarayıcı ve cihaz bilgisi, istek zamanı gibi sunucu kayıtlarını kısa süre tutar.</li>
           <li><b>Çerez tercihin:</b> Onay penceresinde yaptığın seçim bir çerezde saklanır.</li>
           {hasNewsletter(site) ? <li><b>Bülten (kayıt olursan):</b> E-posta adresin, açık rıza verdiğin zaman, kaydolduğun sayfa ve IP adresinin geri döndürülemez bir özeti (hash). Kayıt, e-postana gönderilen bağlantıyla onaylanınca tamamlanır; her bültendeki bağlantıyla tek tıkla ayrılabilirsin.</li> : null}
+          {hasStats(site) ? <li><b>Çerezsiz ziyaret sayımı:</b> Kendi sunucumuzda çalışan Umami ile hangi sayfaların okunduğunu, ziyaretçilerin hangi siteden geldiğini, ülkesini ve cihaz türünü toplu olarak sayarız. Çerez kullanılmaz, tarayıcına bir şey kaydedilmez, IP adresin saklanmaz; kim olduğunu bilmeyiz.</li> : null}
           {hasAnalytics(site) ? <li><b>Analitik (onay verirsen):</b> Google Analytics 4 ile hangi sayfaların okunduğunu anonimleştirilmiş ve toplu olarak ölçeriz.</li> : null}
           {hasAds(site) ? <li><b>Reklam (onay verirsen):</b> Google AdSense, reklam göstermek ve ölçmek için çerez kullanabilir.</li> : null}
           <li><b>Bize yazarsan:</b> E-posta adresin ve mesajın, sadece cevap vermek ve talebini sonuçlandırmak için kullanılır.</li>
@@ -108,6 +110,7 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
         <ul>
           <li>İşlem güvenliği verileri: IP adresi, tarayıcı ve cihaz bilgisi, ziyaret zamanı (sunucu kayıtları)</li>
           <li>Çerez tercihin</li>
+          {hasStats(site) ? <li>Çerezsiz ziyaret istatistiği: ziyaret edilen sayfa, yönlendiren site, ülke, cihaz ve tarayıcı türü (toplu; IP adresi saklanmaz, kimlik oluşturulmaz)</li> : null}
           {nl ? <li>Bülten kaydı: e-posta adresi, açık rıza zamanı, kayıt sayfası, IP adresinin özeti (hash)</li> : null}
           {cookies ? <li>Onay vermen halinde {cookies} çerezleriyle toplanan çevrim içi tanımlayıcılar ve kullanım verileri</li> : null}
           <li>Bize yazman halinde iletişim verileri (e-posta adresi ve mesaj içeriği)</li>
@@ -115,13 +118,14 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
         <h2>3. İşleme amaçları ve hukuki sebepler</h2>
         <ul>
           <li>Sitenin güvenli ve kesintisiz çalışması, kötüye kullanımın önlenmesi: veri sorumlusunun meşru menfaati (KVKK m.5/2-f).</li>
+          {hasStats(site) ? <li>Hangi içeriklerin okunduğunun toplu ve kimliksiz sayılması (çerezsiz istatistik): veri sorumlusunun meşru menfaati (m.5/2-f).</li> : null}
           <li>Talep ve başvurulara cevap verilmesi: bir hakkın tesisi, kullanılması veya korunması ve meşru menfaat (m.5/2-e, f).</li>
           {nl ? <li>Bülten gönderimi: açık rızan (m.5/1). Rızanı her bültendeki ayrılma bağlantısıyla istediğin an geri alabilirsin.</li> : null}
           {cookies ? <li>Ziyaretlerin ölçülmesi{hasAds(site) ? " ve reklam gösterilmesi" : ""}: açık rızan (m.5/1). Rıza vermezsen bu çerezler kullanılmaz.</li> : null}
         </ul>
         <h2>4. Aktarım</h2>
         <p>
-          Veriler, hizmet aldığımız barındırma sağlayıcısına (Vercel){nl ? ", e-posta gönderim sağlayıcısına (Resend)" : ""}{cookies ? " ve onay vermen halinde Google'a (analitik/reklam hizmetleri)" : ""} aktarılabilir.
+          Veriler, hizmet aldığımız barındırma sağlayıcılarına (Vercel{hasStats(site) ? "; çerezsiz istatistik için kendi sunucumuzun bulunduğu Hetzner, Almanya" : ""}){nl ? ", e-posta gönderim sağlayıcısına (Resend)" : ""}{cookies ? " ve onay vermen halinde Google'a (analitik/reklam hizmetleri)" : ""} aktarılabilir.
           Bu sağlayıcıların sunucuları yurt dışında bulunabildiğinden aktarım, KVKK'nın 9. maddesindeki şartlara uygun olarak yapılır; bülten ve çerezlerle yapılan aktarımlar açık rızana dayanır. Kanunen yetkili kurum ve kuruluşlara talep halinde aktarım yapılabilir.
         </p>
         <h2>5. Toplama yöntemi</h2>
@@ -139,7 +143,7 @@ export function LegalPage({ kind, site, domain, className = "ne-legal" }: { kind
     return (
       <>
         <Updated />
-        <p>Çerezler, bir siteyi ziyaret ettiğinde tarayıcına kaydedilen küçük dosyalardır. {site.name} zorunlu çerezleri her zaman kullanır; analitik ve reklam çerezleri ise ancak sen izin verirsen devreye girer. İzin vermeden önce Google'ın ölçüm ve reklam scriptleri sayfaya hiç yüklenmez (Google İzin Modu varsayılan olarak "reddedildi" durumundadır).</p>
+        <p>Çerezler, bir siteyi ziyaret ettiğinde tarayıcına kaydedilen küçük dosyalardır. {site.name} zorunlu çerezleri her zaman kullanır; analitik ve reklam çerezleri ise ancak sen izin verirsen devreye girer.{hasStats(site) ? " Ayrıca çerez kullanmayan, kimliksiz bir ziyaret sayacı (Umami, kendi sunucumuzda) çalışır; tarayıcına hiçbir şey kaydetmez." : ""} İzin vermeden önce Google'ın ölçüm ve reklam scriptleri sayfaya hiç yüklenmez (Google İzin Modu varsayılan olarak "reddedildi" durumundadır).</p>
         <h2>Kullandığımız çerezler</h2>
         <table>
           <thead><tr><th>Çerez</th><th>Tür</th><th>Amaç</th><th>Süre</th></tr></thead>

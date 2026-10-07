@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.8 (7 Eki 2026)
+- `CookielessStats`: çerezsiz, kimliksiz ziyaret sayacı (Umami, kendi sunucumuzda); `PublicSite.analytics.umamiWebsiteId`. Onay gerektirmez; script ve gönderim sitenin kendi alan adından (`/_s/*` yönlendirmesi, site next.config). Yasal sayfalar (gizlilik, KVKK, çerez) tanımlıysa bunu anlatır.
+
 ## 0.1.7 (6 Eki 2026)
 - RSS beslemesi WebSub hub'ını ilan eder (`<atom:link rel="hub">`, `WEBSUB_HUB` = Google'ın pubsubhubbub.appspot.com'u). Engine yazı yayınlanınca hub'a bildirir; Google yeni yazıyı sitemap'i beklemeden öğrenir.
 
