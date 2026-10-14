@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.10 (14 Eki 2026)
+- Birleştirilmiş yazı: engine 410 yanıtında `movedTo` (site içi yol) verirse `getArticle` `{ status: "gone", movedTo }` döner, `goneProxy` 410 yerine **301** ile hedefe yönlendirir. Site yazı sayfası da `movedTo` varsa `permanentRedirect` yapmalı (proxy dışı yol için). Eski engine `movedTo` göndermez, 410 sürer.
+
 ## 0.1.9 (7 Eki 2026)
 - Yasal sayfalar: veri sorumlusu tanımlıysa ve adres girilmediyse adres satırı hiç gösterilmez (gerçek kişi ev adresini yayınlamak zorunda değil; kimlik + e-posta başvuru kanalı). Veri sorumlusu tanımsızsa "[Güncellenecek]" uyarısı kalır.
 

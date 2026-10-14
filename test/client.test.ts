@@ -18,6 +18,17 @@ describe("engine istemcisi", () => {
     expect(f.mock.calls[0]![1].next.revalidate).toBe(60);
   });
 
+  it("v0.1.10: birleştirilmiş yazı movedTo taşır; dış adres ya da bozuk değer kabul edilmez", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce(res(410, { status: "retracted", movedTo: "/tcg/mega-darkrai-ex" }))
+      .mockResolvedValueOnce(res(410, { status: "retracted", movedTo: "https://kotu.com/x" }))
+      .mockResolvedValueOnce(res(410, { status: "retracted", movedTo: "//kotu.com/x" }));
+    const c = createEngineClient({ engineUrl: "https://e.test", site: "pokemon", fetch: f });
+    expect(await c.getArticle("a")).toEqual({ status: "gone", movedTo: "/tcg/mega-darkrai-ex" });
+    expect(await c.getArticle("b")).toEqual({ status: "gone" });
+    expect(await c.getArticle("c")).toEqual({ status: "gone" });
+  });
+
   it("liste sorgu parametrelerini kurar, boş değerleri atar", async () => {
     const f = vi.fn().mockResolvedValue(res(200, EMPTY_PAGE));
     const c = createEngineClient({ engineUrl: "https://e.test", site: "pokemon", fetch: f });

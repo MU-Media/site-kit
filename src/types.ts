@@ -67,7 +67,8 @@ export interface SitemapData {
 
 export type ArticleResult =
   | { status: "ok"; article: Article }
-  | { status: "gone" }
+  /** movedTo (v0.1.10): yazı başka bir yazıyla birleştirildi; eski adres buraya 301 ile yönlenir */
+  | { status: "gone"; movedTo?: string }
   | { status: "missing" };
 
 export type SubscribeResult = { status: "pending" | "already" };

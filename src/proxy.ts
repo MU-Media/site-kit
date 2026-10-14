@@ -3,7 +3,8 @@ import { createEngineClient, fallbackSite, orFallback } from "./client";
 import { siteEnv } from "./config";
 
 /**
- * Geri çekilmiş yazı → 410 Gone. Next sayfaları 410 dönemediği için bu iş proxy'de yapılır.
+ * Geri çekilmiş yazı → 410 Gone; başka yazıyla birleştirilmişse → 301 hedef (v0.1.10). Next sayfaları 410 dönemediği
+ * için bu iş proxy'de yapılır.
  * Kullanım (src/proxy.ts):
  *   import { goneProxy } from "@mu-media/site-kit/proxy";
  *   export const proxy = goneProxy();
@@ -12,7 +13,7 @@ import { siteEnv } from "./config";
  * engine'e ulaşılamazsa istek sayfaya geçer (sayfa kendi 404/410 mantığını çalıştırır).
  */
 const TTL_MS = 60_000;
-const cache = new Map<string, { at: number; gone: boolean }>();
+const cache = new Map<string, { at: number; gone: boolean; movedTo?: string }>();
 let siteName: { at: number; name: string } | undefined;
 
 export const RESERVED_FIRST_SEGMENTS = new Set(["api", "_next", "kategori", "yazar", "bulten", "hakkimizda", "iletisim", "gizlilik", "kvkk", "cerez-politikasi"]);
@@ -37,11 +38,17 @@ export function goneProxy() {
     if (!entry || now - entry.at > TTL_MS) {
       const client = createEngineClient({ engineUrl: env.engineUrl, site: env.site, timeoutMs: 3000 });
       const r = await orFallback(client.getArticle(hit.slug), { status: "missing" as const });
-      entry = { at: now, gone: r.status === "gone" };
+      entry = { at: now, gone: r.status === "gone", ...(r.status === "gone" && r.movedTo ? { movedTo: r.movedTo } : {}) };
       cache.set(hit.slug, entry);
       if (cache.size > 5000) cache.clear();
     }
     if (!entry.gone) return NextResponse.next();
+    // Birleştirilmiş yazı (v0.1.10): kalıcı yönlendirme; Google sinyali ve eski linkler hedefe taşınır
+    if (entry.movedTo) {
+      const res = NextResponse.redirect(new URL(entry.movedTo, req.url), 301);
+      res.headers.set("Cache-Control", "public, max-age=0, s-maxage=300");
+      return res;
+    }
     if (!siteName || now - siteName.at > 5 * TTL_MS) {
       const s = await orFallback(createEngineClient({ engineUrl: env.engineUrl, site: env.site, timeoutMs: 3000 }).getSite(), fallbackSite(env.site));
       siteName = { at: now, name: s.name };

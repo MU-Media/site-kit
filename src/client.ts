@@ -77,7 +77,12 @@ export function createEngineClient(opts: EngineClientOptions) {
     async getArticle(slug: string): Promise<ArticleResult> {
       const res = await get(`${siteBase}/articles/${encodeURIComponent(slug)}`, [TAGS.article(slug), TAGS.articles]);
       if (res.status === 404) return { status: "missing" };
-      if (res.status === 410) return { status: "gone" };
+      if (res.status === 410) {
+        // Birleştirilmiş yazı: engine hedef yolu verir (yalnızca site içi göreli yol kabul edilir)
+        const body = (await res.json().catch(() => ({}))) as { movedTo?: unknown };
+        const to = typeof body.movedTo === "string" && /^\/[^/]/.test(body.movedTo) ? body.movedTo : undefined;
+        return to ? { status: "gone", movedTo: to } : { status: "gone" };
+      }
       if (!res.ok) throw new EngineError(`engine ${res.status}: yazı ${slug}`, res.status);
       return { status: "ok", article: await res.json() };
     },
