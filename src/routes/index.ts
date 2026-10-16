@@ -111,10 +111,19 @@ ${page.docs
 /** Arama motorları ve yapay zekâ tarayıcıları açık (GEO) */
 export const AI_BOTS = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-SearchBot", "PerplexityBot", "Google-Extended", "Applebot-Extended"];
 
+/**
+ * Next.js'in istemci geçiş verisi (?_rsc=…) taranmaz: Googlebot sayfayı çizerken bağlantıların RSC parçalarını
+ * da indiriyor, her derlemede değişen anahtarla "yeni adres" sanıp yeniden tarıyordu. 16 Eki 2026 Tall Grass:
+ * 1.910 tarama isteğinin %74'ü bu parçalardı, yazı HTML'i %10; yeni yazılar "Google bilmiyor"da bekledi.
+ * Her gruba yazılır: bir tarayıcı yalnızca kendi grubunu okur, * grubunu miras almaz.
+ */
+export const CRAWL_DISALLOW = ["/api/", "/*?_rsc=", "/*&_rsc="];
+
 export const robots = (deps?: RouteDeps) => async () => {
   const { abs } = ctx(deps);
+  const rules = ["Allow: /", ...CRAWL_DISALLOW.map((p) => `Disallow: ${p}`), ""];
   return textResponse(
-    ["User-agent: *", "Allow: /", "Disallow: /api/", "", ...AI_BOTS.flatMap((b) => [`User-agent: ${b}`, "Allow: /", ""]), `Sitemap: ${abs("/sitemap.xml")}`, ""].join("\n"),
+    [...["*", ...AI_BOTS].flatMap((b) => [`User-agent: ${b}`, ...rules]), `Sitemap: ${abs("/sitemap.xml")}`, ""].join("\n"),
   );
 };
 

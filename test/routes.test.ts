@@ -92,6 +92,16 @@ describe("feed'ler", () => {
     expect(body).toContain("Sitemap: https://ornek.com/sitemap.xml");
     expect((await adsTxt(deps())()).status).toBe(404);
   });
+  it("Next RSC parçaları (?_rsc=) her grupta kapalı (16 Eki: tarama bütçesinin %74'ü bunlara gidiyordu)", async () => {
+    const body = await (await robots(deps())()).text();
+    const groups = body.split("User-agent: ").slice(1);
+    expect(groups.length).toBeGreaterThan(1);
+    for (const g of groups) {
+      expect(g).toContain("Disallow: /*?_rsc=");
+      expect(g).toContain("Disallow: /api/");
+      expect(g).toContain("Allow: /");
+    }
+  });
 });
 
 describe("bülten sözleşme ayrıntıları", () => {
