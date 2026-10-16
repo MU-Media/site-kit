@@ -1,5 +1,12 @@
 # Değişiklik günlüğü
 
+## 0.1.12 (16 Eki 2026)
+- `sitemapPosts({ extraPaths })`: sitenin sözleşme dışı liste sayfaları (ör. `/haberler`, `/rehberler`) sitemap'e girer. Parametresiz çağrı aynı çıktıyı verir.
+- `llmsTxt({ sections })` (GEO): "Hakkında" bölümü (Hakkımızda, İletişim), sitenin kendi bölümleri, kategori açıklamaları, **rehber/liste/inceleme yazıları "Rehberler ve incelemeler"de** son yazılardan ayrı; boş bölüm yazılmaz. Parametresiz çağrı da yeni biçimi kullanır.
+
+## 0.1.11 (16 Eki 2026)
+- `robots.txt` Next RSC parçalarını (`?_rsc=`) her User-agent grubunda kapatır (Tall Grass'ta tarama bütçesinin %74'ü bunlara gidiyordu).
+
 ## 0.1.10 (14 Eki 2026)
 - Birleştirilmiş yazı: engine 410 yanıtında `movedTo` (site içi yol) verirse `getArticle` `{ status: "gone", movedTo }` döner, `goneProxy` 410 yerine **301** ile hedefe yönlendirir. Site yazı sayfası da `movedTo` varsa `permanentRedirect` yapmalı (proxy dışı yol için). Eski engine `movedTo` göndermez, 410 sürer.
 

@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createEngineClient } from "../src/client";
-import { adsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
+import { adsTxt, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
 import type { SiteEnv } from "../src/config";
 
 const env: SiteEnv = { engineUrl: "https://e.test", site: "pokemon", revalidateSecret: "s3cret-uzun", siteUrl: "https://ornek.com" };
@@ -85,6 +85,31 @@ describe("feed'ler", () => {
     expect(body).toContain("https://ornek.com/kategori/tcg");
     expect(body).toContain("https://ornek.com/yazar/deniz");
     expect(body).toContain("<loc>https://ornek.com/tcg/delta</loc><lastmod>2026-09-24T11:00:00Z</lastmod>");
+  });
+  it("sitemap-posts sitenin ek sayfalarını tekrarsız ekler (v0.1.12)", async () => {
+    const body = await (await sitemapPosts({ ...deps(), extraPaths: ["/haberler", "/rehberler", "/"] })()).text();
+    expect(body).toContain("<loc>https://ornek.com/haberler</loc>");
+    expect(body).toContain("<loc>https://ornek.com/rehberler</loc>");
+    expect(body.match(/<loc>https:\/\/ornek\.com\/<\/loc>/g)).toHaveLength(1);
+  });
+  it("llms.txt: hakkında, sitenin bölümleri, kategori açıklaması, rehberler ve son yazılar ayrı (v0.1.12)", async () => {
+    const guide = { ...ART, slug: "grading", title: "Grading nedir", type: "rehber" };
+    const f = vi.fn(async (url: string) => {
+      if (url.includes("/articles")) return json(200, { docs: [ART, guide], totalDocs: 2, page: 1, totalPages: 1 });
+      return json(200, { ...SITE, categories: [{ slug: "tcg", name: "Kart", description: "Kart oyunu haberleri" }] });
+    });
+    const body = await (await llmsTxt({ ...deps(f), sections: [{ title: "Rehberler", links: [{ title: "Tüm rehberler", path: "/rehberler", note: "adım adım" }] }] })()).text();
+    expect(body).toContain("## Hakkında\n- [Hakkımızda](https://ornek.com/hakkimizda)");
+    expect(body).toContain("- [Tüm rehberler](https://ornek.com/rehberler): adım adım");
+    expect(body).toContain("- [Kart](https://ornek.com/kategori/tcg): Kart oyunu haberleri");
+    expect(body).toMatch(/## Rehberler ve incelemeler\n- \[Grading nedir\]/);
+    expect(body).toMatch(/## Son yazılar\n- \[Delta <Reign>\]/);
+    expect(body.indexOf("## Hakkında")).toBeLessThan(body.indexOf("## Kategoriler"));
+  });
+  it("llms.txt eski çağrı biçimiyle de çalışır, boş bölüm başlığı yazılmaz", async () => {
+    const body = await (await llmsTxt(deps())()).text();
+    expect(body).toContain("## Kategoriler");
+    expect(body).not.toContain("## Rehberler ve incelemeler");
   });
   it("robots yapay zekâ tarayıcılarına açık ve sitemap'i gösterir; ads.txt kimlik yoksa 404", async () => {
     const body = await (await robots(deps())()).text();
