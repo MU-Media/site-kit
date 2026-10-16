@@ -36,11 +36,16 @@ ${maps.map((m) => `  <sitemap><loc>${abs(m)}</loc></sitemap>`).join("\n")}
 </sitemapindex>`);
 };
 
-/** /sitemap-posts.xml: ana sayfa, kategoriler, yazarlar, yasal sayfalar, tüm yazılar */
-export const sitemapPosts = (deps?: RouteDeps) => async () => {
+export interface SitemapOptions extends RouteDeps {
+  /** Sitenin kendi liste sayfaları (ör. "/haberler", "/rehberler"); sözleşme dışı sayfalar sitemap'e böyle girer (v0.1.12) */
+  extraPaths?: string[];
+}
+
+/** /sitemap-posts.xml: ana sayfa, kategoriler, yazarlar, yasal sayfalar, sitenin ek sayfaları, tüm yazılar */
+export const sitemapPosts = (deps?: SitemapOptions) => async () => {
   const { client, abs } = ctx(deps);
   const sm = await orFallback(client.getSitemap(), EMPTY_SITEMAP);
-  const statics = ["/", ...sm.categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"];
+  const statics = [...new Set(["/", ...(deps?.extraPaths ?? []), ...sm.categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"])];
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${statics.map((u) => `  <url><loc>${xmlEscape(abs(u))}</loc></url>`).join("\n")}
@@ -127,15 +132,38 @@ export const robots = (deps?: RouteDeps) => async () => {
   );
 };
 
-/** /llms.txt: sitenin kısa tanımı + kategori ve son yazı linkleri */
-export const llmsTxt = (deps?: RouteDeps) => async () => {
+export interface LlmsSection {
+  title: string;
+  links: { title: string; path: string; note?: string }[];
+}
+export interface LlmsOptions extends RouteDeps {
+  /** Sitenin kendi bölümleri (ör. liste sayfaları, yayın ilkeleri); "Hakkında"dan sonra gelir (v0.1.12) */
+  sections?: LlmsSection[];
+}
+
+/** Kalıcı başvuru yazıları (rehber, liste, inceleme): llms.txt'de son yazılardan ayrı listelenir */
+const REFERENCE_TYPES = new Set(["rehber", "liste", "inceleme"]);
+
+/**
+ * /llms.txt: sitenin kısa tanımı, hakkında sayfaları, sitenin ek bölümleri, kategoriler (açıklamalarıyla),
+ * rehberler ve incelemeler, son yazılar (v0.1.12: bölümler ve rehber ayrımı; önceden yalnız kategori + son yazılar).
+ */
+export const llmsTxt = (deps?: LlmsOptions) => async () => {
   const { client, site, abs } = ctx(deps);
-  const [s, page] = await Promise.all([site(), orFallback(client.listArticles({ limit: 30 }), EMPTY_PAGE)]);
+  const [s, page] = await Promise.all([site(), orFallback(client.listArticles({ limit: 50 }), EMPTY_PAGE)]);
+  const link = (title: string, path: string, note?: string) => `- [${title}](${abs(path)})${note ? `: ${note}` : ""}`;
+  const art = (a: (typeof page.docs)[number]) => link(a.title, `/${a.category.slug}/${a.slug}`, a.meta);
+  const guides = page.docs.filter((a) => REFERENCE_TYPES.has(a.type)).slice(0, 20);
+  const latest = page.docs.filter((a) => !REFERENCE_TYPES.has(a.type)).slice(0, 20);
+  const block = (title: string, lines: string[]) => (lines.length ? [`## ${title}`, ...lines, ""] : []);
   return textResponse(
     [
       `# ${s.name}`, "", `> ${s.description}`, "",
-      "## Kategoriler", ...s.categories.map((c) => `- [${c.name}](${abs(`/kategori/${c.slug}`)})`), "",
-      "## Son yazılar", ...page.docs.map((a) => `- [${a.title}](${abs(`/${a.category.slug}/${a.slug}`)}): ${a.meta}`), "",
+      ...block("Hakkında", [link("Hakkımızda", "/hakkimizda", "kim olduğumuz, nasıl çalıştığımız, kaynak ve düzeltme ilkesi"), link("İletişim", "/iletisim")]),
+      ...(deps?.sections ?? []).flatMap((sec) => block(sec.title, sec.links.map((l) => link(l.title, l.path, l.note)))),
+      ...block("Kategoriler", s.categories.map((c) => link(c.name, `/kategori/${c.slug}`, c.description))),
+      ...block("Rehberler ve incelemeler", guides.map(art)),
+      ...block("Son yazılar", latest.map(art)),
     ].join("\n"),
   );
 };
