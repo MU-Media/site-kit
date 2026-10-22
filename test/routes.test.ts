@@ -86,6 +86,15 @@ describe("feed'ler", () => {
     expect(body).toContain("https://ornek.com/yazar/deniz");
     expect(body).toContain("<loc>https://ornek.com/tcg/delta</loc><lastmod>2026-09-24T11:00:00Z</lastmod>");
   });
+  it("sitemap yazısı olmayan kategoriyi (noindex) içermez", async () => {
+    const f = vi.fn(async (url: string) => {
+      if (url.endsWith("/sitemap")) return json(200, { articles: [{ slug: "delta", category: "tcg", publishedAt: ART.publishedAt, updatedAt: ART.updatedAt }], categories: ["tcg", "bos"], authors: [] });
+      return json(200, SITE);
+    });
+    const body = await (await sitemapPosts(deps(f))()).text();
+    expect(body).toContain("https://ornek.com/kategori/tcg");
+    expect(body).not.toContain("/kategori/bos");
+  });
   it("sitemap-posts sitenin ek sayfalarını tekrarsız ekler (v0.1.12)", async () => {
     const body = await (await sitemapPosts({ ...deps(), extraPaths: ["/haberler", "/rehberler", "/"] })()).text();
     expect(body).toContain("<loc>https://ornek.com/haberler</loc>");

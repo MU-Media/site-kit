@@ -41,11 +41,17 @@ export interface SitemapOptions extends RouteDeps {
   extraPaths?: string[];
 }
 
-/** /sitemap-posts.xml: ana sayfa, kategoriler, yazarlar, yasal sayfalar, sitenin ek sayfaları, tüm yazılar */
+/**
+ * /sitemap-posts.xml: ana sayfa, kategoriler, yazarlar, yasal sayfalar, sitenin ek sayfaları, tüm yazılar.
+ * Yazısı olmayan kategori girmez: kategori sayfası o durumda noindex verir, sitemap'te kalırsa
+ * Search Console "noindex etiketi tarafından hariç tutuldu" uyarısı üretir (v0.1.13).
+ */
 export const sitemapPosts = (deps?: SitemapOptions) => async () => {
   const { client, abs } = ctx(deps);
   const sm = await orFallback(client.getSitemap(), EMPTY_SITEMAP);
-  const statics = [...new Set(["/", ...(deps?.extraPaths ?? []), ...sm.categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"])];
+  const used = new Set(sm.articles.map((a) => a.category));
+  const categories = sm.categories.filter((c) => used.has(c));
+  const statics = [...new Set(["/", ...(deps?.extraPaths ?? []), ...categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"])];
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${statics.map((u) => `  <url><loc>${xmlEscape(abs(u))}</loc></url>`).join("\n")}
