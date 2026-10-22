@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.13 (22 Eki 2026)
+- `sitemapPosts`: yayında yazısı olmayan kategori sitemap'e girmez. Kategori sayfası bu durumda `noindex` veriyor; sitemap'te kalınca Search Console "noindex etiketi tarafından hariç tutuldu" uyarısı geliyordu (3D Usta, `/kategori/is` ve `/kategori/projeler`). İlk yazı yayınlanınca kategori sitemap'e kendiliğinden girer.
+
 ## 0.1.12 (16 Eki 2026)
 - `sitemapPosts({ extraPaths })`: sitenin sözleşme dışı liste sayfaları (ör. `/haberler`, `/rehberler`) sitemap'e girer. Parametresiz çağrı aynı çıktıyı verir.
 - `llmsTxt({ sections })` (GEO): "Hakkında" bölümü (Hakkımızda, İletişim), sitenin kendi bölümleri, kategori açıklamaları, **rehber/liste/inceleme yazıları "Rehberler ve incelemeler"de** son yazılardan ayrı; boş bölüm yazılmaz. Parametresiz çağrı da yeni biçimi kullanır.
