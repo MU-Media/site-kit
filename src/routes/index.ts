@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { createEngineClient, EMPTY_PAGE, EMPTY_SITEMAP, fallbackSite, orFallback, TAGS, type EngineClient } from "../client";
 import { absUrl, siteEnv, type SiteEnv } from "../config";
 import type { PublicSite, RevalidatePayload } from "../types";
@@ -217,7 +218,14 @@ export function secretMatches(given: string | null, expected: string | undefined
  * yazı sayfalarını soğutuyor, Googlebot hemen her ziyarette sayfanın sıfırdan üretilmesini bekliyordu (Tall Grass,
  * Search Console HTML yanıt süresi ort. 1,8 sn, ABD'den ilk istek 1,5-1,9 sn; 2 Kas 2026).
  */
-export const revalidate = (deps?: RouteDeps & { revalidateTag?: typeof revalidateTag; revalidatePath?: typeof revalidatePath }) =>
+/** Yanıt gönderildikten sonra sayfaları arka planda ister (v0.1.15): değişen yazının ilk ziyaretçisi (çoğu zaman
+ * Googlebot) ~1,4 sn'lik yeniden üretimi beklemesin. Hata yutulur; yenileme zaten gerçekleşmiştir. */
+const warmAfter = (urls: string[]) =>
+  after(async () => {
+    await Promise.allSettled(urls.map((u) => fetch(u, { cache: "no-store", headers: { "user-agent": "site-kit-warm/1" }, signal: AbortSignal.timeout(15_000) })));
+  });
+
+export const revalidate = (deps?: RouteDeps & { revalidateTag?: typeof revalidateTag; revalidatePath?: typeof revalidatePath; warm?: (urls: string[]) => void }) =>
   async (req: Request) => {
     const { env } = ctx(deps);
     if (!secretMatches(req.headers.get("x-ne-secret"), env.revalidateSecret)) {
@@ -238,6 +246,8 @@ export const revalidate = (deps?: RouteDeps & { revalidateTag?: typeof revalidat
     rp("/");
     if (body.category) rp(`/kategori/${body.category}`);
     if (body.slug && body.category) rp(`/${body.category}/${body.slug}`);
+    const paths = ["/", ...(body.category ? [`/kategori/${body.category}`] : []), ...(body.slug && body.category && body.status === "published" ? [`/${body.category}/${body.slug}`] : [])];
+    (deps?.warm ?? warmAfter)(paths.map((p) => absUrl(env.siteUrl, p)));
     return Response.json({ revalidated: true, slug: body.slug ?? null });
   };
 
