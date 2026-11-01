@@ -22,7 +22,8 @@ const deps = (f = mockEngine()) => ({ env, client: createEngineClient({ engineUr
 describe("revalidate", () => {
   it("yanlış ya da eksik şifreye 401, doğruya 200 ve etiketleri anında sona erdirir", async () => {
     const tags: [string, unknown][] = []; const paths: string[] = [];
-    const h = revalidate({ ...deps(), revalidateTag: ((t: string, p: unknown) => void tags.push([t, p])) as any, revalidatePath: ((p: string) => void paths.push(p)) as any });
+    const warmed: string[][] = [];
+    const h = revalidate({ ...deps(), revalidateTag: ((t: string, p: unknown) => void tags.push([t, p])) as any, revalidatePath: ((p: string) => void paths.push(p)) as any, warm: (u) => void warmed.push(u) });
     const req = (secret?: string) => new Request("https://ornek.com/api/revalidate", { method: "POST", headers: secret ? { "x-ne-secret": secret } : {}, body: JSON.stringify({ type: "article", slug: "delta", category: "tcg", status: "retracted" }) });
     expect((await h(req())).status).toBe(401);
     expect((await h(req("yanlis"))).status).toBe(401);
@@ -34,6 +35,11 @@ describe("revalidate", () => {
     expect(tags.find((t) => t[0] === "ne:article:delta")![1]).toEqual({ expire: 0 });
     expect(tags.filter((t) => t[0] !== "ne:article:delta").every((t) => t[1] === "max")).toBe(true);
     expect(paths).toEqual(["/", "/kategori/tcg", "/tcg/delta"]);
+    // geri çekilen yazı ısıtılmaz (404'ü önbelleğe almak gereksiz), ana sayfa ve kategori ısıtılır
+    expect(warmed).toEqual([["https://ornek.com/", "https://ornek.com/kategori/tcg"]]);
+    const pub = new Request("https://ornek.com/api/revalidate", { method: "POST", headers: { "x-ne-secret": "s3cret-uzun" }, body: JSON.stringify({ type: "article", slug: "delta", category: "tcg", status: "published" }) });
+    await h(pub);
+    expect(warmed[1]).toEqual(["https://ornek.com/", "https://ornek.com/kategori/tcg", "https://ornek.com/tcg/delta"]);
   });
   it("sırrı tanımlı olmayan site her isteği reddeder", () => {
     expect(secretMatches("x", undefined)).toBe(false);

@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.15 (2 Kas 2026)
+- `/api/revalidate` yanıtı gönderdikten sonra (`after`) ana sayfayı, kategoriyi ve yayındaki yazıyı arka planda ister: değişen yazının ilk ziyaretçisi (çoğu zaman elle indeks isteğinden hemen sonra gelen Googlebot) ~1,4 sn'lik yeniden üretimi beklemez. Geri çekilen yazı ısıtılmaz.
+
 ## 0.1.14 (2 Kas 2026)
 Tall Grass indeks denetimi: Search Console'da Googlebot'un HTML yanıt süresi ort. 1,8 sn (29 Eyl'den beri her gün 1,8-3,2 sn), ABD'den yazı sayfasının ilk isteği 1,5-1,9 sn, Almanya'dan 0,15 sn. Google yavaş sunucuda taramayı kısıyor; 34 sayfa "keşfedildi, taranmadı" bekliyor.
 - **`/api/revalidate`:** yalnızca değişen yazının etiketi anında sona erer (`expire: 0`); ortak etiketler (`ne:articles`, `ne:sitemap`, `ne:site`) `"max"` ile bayatlar (bayatı sun, arkada yenile). Eskiden hepsi `expire: 0` idi: engine'deki her yazı kaydı sitenin bütün yazı sayfalarını soğutuyor, bir sonraki ziyaretçi (çoğu zaman Googlebot) sayfanın sıfırdan üretilmesini bekliyordu.
