@@ -3,6 +3,12 @@ import { createEngineClient, fallbackSite, orFallback } from "./client";
 import { siteEnv } from "./config";
 
 /**
+ * KULLANIMDAN KALKTI (v0.1.14): sitede kullanma. Proxy önbellekten ÖNCE ve her yazı isteğinde çalışıyor, soğuk
+ * örnekte engine'e gidiyordu; Googlebot HTML yanıtı ort. 1,8 sn oldu (Tall Grass, Search Console, 2 Kas 2026).
+ * Geri çekilen yazı → yazı sayfası notFound() (404 + noindex; Google 404 ile 410'u neredeyse aynı işler),
+ * birleştirilen yazı → yazı sayfası permanentRedirect(movedTo). Sözleşme denetimi goneProxy görürse uyarır.
+ * Aşağıdaki açıklama eski davranış içindir.
+ *
  * Geri çekilmiş yazı → 410 Gone; başka yazıyla birleştirilmişse → 301 hedef (v0.1.10). Next sayfaları 410 dönemediği
  * için bu iş proxy'de yapılır.
  * Kullanım (src/proxy.ts):

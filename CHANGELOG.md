@@ -1,5 +1,12 @@
 # Değişiklik günlüğü
 
+## 0.1.14 (2 Kas 2026)
+Tall Grass indeks denetimi: Search Console'da Googlebot'un HTML yanıt süresi ort. 1,8 sn (29 Eyl'den beri her gün 1,8-3,2 sn), ABD'den yazı sayfasının ilk isteği 1,5-1,9 sn, Almanya'dan 0,15 sn. Google yavaş sunucuda taramayı kısıyor; 34 sayfa "keşfedildi, taranmadı" bekliyor.
+- **`/api/revalidate`:** yalnızca değişen yazının etiketi anında sona erer (`expire: 0`); ortak etiketler (`ne:articles`, `ne:sitemap`, `ne:site`) `"max"` ile bayatlar (bayatı sun, arkada yenile). Eskiden hepsi `expire: 0` idi: engine'deki her yazı kaydı sitenin bütün yazı sayfalarını soğutuyor, bir sonraki ziyaretçi (çoğu zaman Googlebot) sayfanın sıfırdan üretilmesini bekliyordu.
+- **`goneProxy` kullanımdan kalktı.** Proxy her yazı isteğinde önbellekten önce çalışıp soğuk örnekte engine'e soruyordu. Geri çekilen yazıyı ve birleştirmeyi yazı sayfası karşılar: `gone` → `notFound()` (404, noindex), `movedTo` → `permanentRedirect`. Sitede `src/proxy.ts` silinir.
+- **Sözleşme:** `proxy-410` işareti kalktı; yerine `no-article-proxy` (proxy.ts goneProxy kullanmamalı) ve `gone-in-page` (yazı sayfasında `permanentRedirect`).
+- **`indexNowKey()` rotası:** engine'in IndexNow bildirimindeki `https://<alan>/<anahtar>.txt` dosyasını sunar (next.config rewrite `/:key.txt` → `/api/indexnow/:key`, ortam `INDEXNOW_KEY`). Dosya yoktu, Bing/Yandex bildirimleri hiç kabul edilmemişti.
+
 ## 0.1.13 (22 Eki 2026)
 - `sitemapPosts`: yayında yazısı olmayan kategori sitemap'e girmez. Kategori sayfası bu durumda `noindex` veriyor; sitemap'te kalınca Search Console "noindex etiketi tarafından hariç tutuldu" uyarısı geliyordu (3D Usta, `/kategori/is` ve `/kategori/projeler`). İlk yazı yayınlanınca kategori sitemap'e kendiliğinden girer.
 

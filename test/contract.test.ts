@@ -10,10 +10,10 @@ describe("sözleşme denetimi kalibrasyonu (cairn: başarısız olurken görülm
     expect(r.problems).toEqual([]);
     expect(r.ok).toBe(true);
   });
-  it("bozuk ağaç tam olarak bilinen 4 sorunu bulur", () => {
+  it("bozuk ağaç tam olarak bilinen 5 sorunu bulur", () => {
     const r = checkStatic(fx("broken"));
     expect(r.ok).toBe(false);
-    expect(r.problems.map((p) => p.id).sort()).toEqual(["kit:/rss.xml", "newsletter-form", "proxy-410", "route:/ads.txt"].sort());
+    expect(r.problems.map((p) => p.id).sort()).toEqual(["kit:/rss.xml", "newsletter-form", "no-article-proxy", "gone-in-page", "route:/ads.txt"].sort());
   });
   it("app klasörü yoksa reddeder", () => {
     expect(checkStatic(fileURLToPath(new URL("../src", import.meta.url))).ok).toBe(false);
