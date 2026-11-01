@@ -25,7 +25,8 @@
     "/api/newsletter"
   ],
   "markers": [
-    { "id": "proxy-410", "file": "proxy", "must": "goneProxy", "why": "geri çekilen yazılar 410 dönmeli" },
+    { "id": "no-article-proxy", "file": "proxy", "mustNot": "goneProxy", "why": "goneProxy her yazı isteğinde önbellekten önce engine'e gidiyordu (Googlebot HTML yanıtı ort. 1,8 sn); geri çekilen ve birleştirilen yazıyı yazı sayfası karşılar (v0.1.14)" },
+    { "id": "gone-in-page", "anywhere": "permanentRedirect", "why": "birleştirilmiş yazı, yazı sayfasında kalıcı yönlendirilir (proxy yok, v0.1.14)" },
     { "id": "consent-defaults", "anywhere": "ConsentDefaultsScript", "why": "Consent Mode v2 varsayılanları (her şey reddedilmiş başlar)" },
     { "id": "consent-provider", "anywhere": "ConsentProvider", "why": "GA4/AdSense sadece onayla yüklenir" },
     { "id": "consent-banner", "anywhere": "ConsentBanner", "why": "KVKK çerez onayı penceresi" },

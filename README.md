@@ -28,7 +28,7 @@ pnpm add "@mu-media/site-kit@github:MU-Media/site-kit#v0.1.0"
 | `/config` | `const { siteUrl } = siteEnv()` |
 | `/seo` | `export const generateMetadata = async () => articleMetadata(site, article)` · `<JsonLd data={articleLd(site, siteUrl, article)} />` |
 | `/routes` | `export const GET = rss()` · `export const POST = revalidate()` · `export const POST = newsletterProxy()` |
-| `/proxy` | `export const proxy = goneProxy()` (geri çekilen yazı → 410) |
+| `/proxy` | KULLANIMDAN KALKTI (v0.1.14): `goneProxy` her yazı isteğinde önbellekten önce engine'e gidiyordu; geri çekilen/birleştirilen yazıyı yazı sayfası karşılar (`notFound` / `permanentRedirect`), `src/proxy.ts` silinir |
 | `/components` | `<ArticleBody markdown={a.bodyMarkdown} />` · `<NewsletterForm source="yazi-sonu" />` · `<ConsentProvider ga4={..}><ConsentBanner /></ConsentProvider>` · `<LegalPage kind="kvkk" site={site} />` |
 | `/contract` | `REQUIRED_PAGES`, `REQUIRED_ROUTES` |
 | `/markdown` | `renderMarkdown(md)` |

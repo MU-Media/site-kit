@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createEngineClient } from "../src/client";
-import { adsTxt, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
+import { adsTxt, indexNowKey, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
 import type { SiteEnv } from "../src/config";
 
 const env: SiteEnv = { engineUrl: "https://e.test", site: "pokemon", revalidateSecret: "s3cret-uzun", siteUrl: "https://ornek.com" };
@@ -30,7 +30,9 @@ describe("revalidate", () => {
     const ok = await h(req("s3cret-uzun"));
     expect(ok.status).toBe(200);
     expect(tags.map((t) => t[0])).toContain("ne:article:delta");
-    expect(tags.every((t) => (t[1] as { expire: number }).expire === 0)).toBe(true);
+    // v0.1.14: yalnızca değişen yazı anında düşer; ortak etiketler bayatı sunup arkada yenilenir (bütün site soğumasın)
+    expect(tags.find((t) => t[0] === "ne:article:delta")![1]).toEqual({ expire: 0 });
+    expect(tags.filter((t) => t[0] !== "ne:article:delta").every((t) => t[1] === "max")).toBe(true);
     expect(paths).toEqual(["/", "/kategori/tcg", "/tcg/delta"]);
   });
   it("sırrı tanımlı olmayan site her isteği reddeder", () => {
@@ -147,5 +149,17 @@ describe("bülten sözleşme ayrıntıları", () => {
     expect(r.status).toBe(403);
     expect(await r.json()).toEqual({ error: "Bu sitede bülten kapalı." });
     expect(JSON.parse(String((f.mock.calls[0] as any)[1].body)).consentText).toBe("rıza");
+  });
+});
+
+describe("IndexNow anahtar dosyası", () => {
+  const call = (h: ReturnType<typeof indexNowKey>, key: string) => h(new Request(`https://ornek.com/${key}.txt`), { params: Promise.resolve({ key }) });
+  it("doğru anahtar düz metin döner, yanlışı ve tanımsızı 404", async () => {
+    const h = indexNowKey({ key: "abc123def456" });
+    const ok = await call(h, "abc123def456");
+    expect(ok.status).toBe(200);
+    expect(await ok.text()).toBe("abc123def456");
+    expect((await call(h, "baska")).status).toBe(404);
+    expect((await call(indexNowKey({ key: "" }), "abc123def456")).status).toBe(404);
   });
 });

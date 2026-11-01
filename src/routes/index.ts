@@ -175,6 +175,23 @@ export const llmsTxt = (deps?: LlmsOptions) => async () => {
 };
 
 /** /ads.txt: AdSense yayıncı kimliği yoksa 404 */
+/**
+ * IndexNow anahtar dosyası (v0.1.14). Engine yayında api.indexnow.org'a `keyLocation: https://<alan>/<anahtar>.txt`
+ * bildirir; Bing/Yandex bu dosyayı okuyup anahtarı doğrular. Site dosyayı sunmadığı için bildirimler hiç kabul
+ * edilmemişti (Tall Grass Bing'de 0 sayfa, 2 Kas 2026). Anahtar herkese açık olacak şekilde tasarlanmıştır.
+ * Kullanım: next.config rewrite `/:key(<hex>).txt` → `/api/indexnow/:key`, rota dosyası:
+ *   // src/app/api/indexnow/[key]/route.ts
+ *   export const GET = indexNowKey();
+ * Ortam: INDEXNOW_KEY (engine'dekiyle aynı değer). Anahtar uyuşmazsa ya da tanımsızsa 404.
+ */
+export const indexNowKey = (deps?: { key?: string }) =>
+  async (_req: Request, ctxArg: { params: Promise<{ key: string }> }) => {
+    const key = (deps?.key ?? process.env.INDEXNOW_KEY ?? "").trim();
+    const { key: asked } = await ctxArg.params;
+    if (!key || asked !== key) return textResponse("Not found", 404);
+    return textResponse(key);
+  };
+
 export const adsTxt = (deps?: RouteDeps) => async () => {
   const { site } = ctx(deps);
   const pub = (await site()).ads?.adsensePublisherId;
@@ -193,7 +210,12 @@ export function secretMatches(given: string | null, expected: string | undefined
 
 /**
  * POST /api/revalidate (engine → site). Başlık x-ne-secret yanlışsa 401.
- * Geri çekilen yazının hemen 410 dönmesi için etiketler anında sona erdirilir (expire: 0).
+ *
+ * v0.1.14: yalnızca değişen yazının etiketi ve yolu anında sona erer (expire: 0; geri çekilen yazı hemen düşer).
+ * Ortak etiketler (bütün yazılar, sitemap, site) "max" ile bayatlar: sonraki ziyaretçi bayat sayfayı hemen alır,
+ * yenisi arka planda üretilir. Eskiden ortak etiketler de expire: 0 idi; engine'deki her yazı kaydı sitenin BÜTÜN
+ * yazı sayfalarını soğutuyor, Googlebot hemen her ziyarette sayfanın sıfırdan üretilmesini bekliyordu (Tall Grass,
+ * Search Console HTML yanıt süresi ort. 1,8 sn, ABD'den ilk istek 1,5-1,9 sn; 2 Kas 2026).
  */
 export const revalidate = (deps?: RouteDeps & { revalidateTag?: typeof revalidateTag; revalidatePath?: typeof revalidatePath }) =>
   async (req: Request) => {
@@ -209,11 +231,10 @@ export const revalidate = (deps?: RouteDeps & { revalidateTag?: typeof revalidat
     }
     const rt = deps?.revalidateTag ?? revalidateTag;
     const rp = deps?.revalidatePath ?? revalidatePath;
-    const now = { expire: 0 };
-    rt(TAGS.articles, now);
-    rt(TAGS.sitemap, now);
-    rt(TAGS.site, now);
-    if (body.slug) rt(TAGS.article(body.slug), now);
+    rt(TAGS.articles, "max");
+    rt(TAGS.sitemap, "max");
+    rt(TAGS.site, "max");
+    if (body.slug) rt(TAGS.article(body.slug), { expire: 0 });
     rp("/");
     if (body.category) rp(`/kategori/${body.category}`);
     if (body.slug && body.category) rp(`/${body.category}/${body.slug}`);

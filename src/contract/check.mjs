@@ -53,7 +53,9 @@ export function checkStatic(root) {
   for (const m of CONTRACT.markers) {
     if (m.file === "proxy") {
       const pf = ["src/proxy.ts", "src/proxy.js", "proxy.ts", "proxy.js"].map((x) => join(root, x)).find(existsSync);
-      if (!pf || !readFileSync(pf, "utf8").includes(m.must)) problems.push({ id: m.id, message: `proxy.ts ${m.must} kullanmıyor: ${m.why}` });
+      const code = pf ? readFileSync(pf, "utf8") : "";
+      if (m.must && !code.includes(m.must)) problems.push({ id: m.id, message: `proxy.ts ${m.must} kullanmıyor: ${m.why}` });
+      if (m.mustNot && code.includes(m.mustNot)) problems.push({ id: m.id, message: `proxy.ts ${m.mustNot} kullanmamalı: ${m.why}` });
     } else if (!all.some(([, c]) => c.includes(m.anywhere))) {
       problems.push({ id: m.id, message: `${m.anywhere} hiçbir yerde kullanılmıyor: ${m.why}` });
     }
