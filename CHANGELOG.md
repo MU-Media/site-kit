@@ -1,5 +1,12 @@
 # Değişiklik günlüğü
 
+## 0.1.16 (21 Kas 2026)
+Tall Grass tarama denetimi: Googlebot 16 Ekim'den beri günde ortalama ~4 HTML sayfası tarıyor; 313 adres "keşfedildi, taranmadı", 79 adres "tarandı, alınmadı". Site haritası Google'a gerçekten istediğimiz adresleri, değiştiği günle söylemeli.
+- `sitemapIndex({ extraMaps })`: sitenin kendi haritaları dizine girer (ör. `/sitemap-pokedex.xml`). Search Console bölüm bölüm indeks sayısı verir; engine'in günlük raporu dizindeki bütün haritaları zaten okur.
+- `sitemapPosts({ exclude })`: sitenin noindex verdiği yazılar ve sayfalar haritaya girmez.
+- `sitemapPaths({ paths })`: sitenin kendi sayfaları için `lastmod`'lu ayrı harita rotası. `lastmod` içeriğin gerçekten değiştiği gündür, her gün "bugün" yazılmaz.
+- Parametresiz çağrılar aynı çıktıyı verir.
+
 ## 0.1.15 (2 Kas 2026)
 - `/api/revalidate` yanıtı gönderdikten sonra (`after`) ana sayfayı, kategoriyi ve yayındaki yazıyı arka planda ister: değişen yazının ilk ziyaretçisi (çoğu zaman elle indeks isteğinden hemen sonra gelen Googlebot) ~1,4 sn'lik yeniden üretimi beklemez. Geri çekilen yazı ısıtılmaz.
 

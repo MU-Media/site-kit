@@ -27,10 +27,13 @@ function ctx(deps: RouteDeps = {}) {
   return { env, client, site, abs: (p: string) => absUrl(env.siteUrl, p) };
 }
 
-/** /sitemap.xml: yazılar + haber sitemap'i */
-export const sitemapIndex = (deps?: RouteDeps) => async () => {
+/**
+ * /sitemap.xml: yazılar + haber sitemap'i + sitenin kendi haritaları (`extraMaps`, v0.1.16; ör. "/sitemap-pokedex.xml").
+ * Ayrı harita Search Console'da bölüm bölüm indeks sayısı verir; engine raporu dizindeki bütün haritaları okur.
+ */
+export const sitemapIndex = (deps?: RouteDeps & { extraMaps?: string[] }) => async () => {
   const { abs } = ctx(deps);
-  const maps = ["/sitemap-posts.xml", "/news-sitemap.xml"];
+  const maps = [...new Set(["/sitemap-posts.xml", "/news-sitemap.xml", ...(deps?.extraMaps ?? [])])];
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${maps.map((m) => `  <sitemap><loc>${abs(m)}</loc></sitemap>`).join("\n")}
@@ -40,6 +43,11 @@ ${maps.map((m) => `  <sitemap><loc>${abs(m)}</loc></sitemap>`).join("\n")}
 export interface SitemapOptions extends RouteDeps {
   /** Sitenin kendi liste sayfaları (ör. "/haberler", "/rehberler"); sözleşme dışı sayfalar sitemap'e böyle girer (v0.1.12) */
   extraPaths?: string[];
+  /**
+   * Haritaya girmeyecek site içi yollar (v0.1.16): sitenin noindex verdiği yazılar ("/tcg/etb-nedir-pokemon").
+   * Google'ın tarayıp almadığı sayfa haritada kaldıkça her gün yeniden "dizine al" diye önerilmiş olur.
+   */
+  exclude?: Iterable<string>;
 }
 
 /**
@@ -52,11 +60,32 @@ export const sitemapPosts = (deps?: SitemapOptions) => async () => {
   const sm = await orFallback(client.getSitemap(), EMPTY_SITEMAP);
   const used = new Set(sm.articles.map((a) => a.category));
   const categories = sm.categories.filter((c) => used.has(c));
-  const statics = [...new Set(["/", ...(deps?.extraPaths ?? []), ...categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"])];
+  const skip = new Set(deps?.exclude ?? []);
+  const statics = [...new Set(["/", ...(deps?.extraPaths ?? []), ...categories.map((c) => `/kategori/${c}`), ...sm.authors.map((a) => `/yazar/${a}`), "/hakkimizda", "/iletisim"])].filter((u) => !skip.has(u));
+  const articles = sm.articles.filter((a) => !skip.has(`/${a.category}/${a.slug}`));
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${statics.map((u) => `  <url><loc>${xmlEscape(abs(u))}</loc></url>`).join("\n")}
-${sm.articles.map((a) => `  <url><loc>${xmlEscape(abs(`/${a.category}/${a.slug}`))}</loc><lastmod>${a.updatedAt}</lastmod></url>`).join("\n")}
+${articles.map((a) => `  <url><loc>${xmlEscape(abs(`/${a.category}/${a.slug}`))}</loc><lastmod>${a.updatedAt}</lastmod></url>`).join("\n")}
+</urlset>`);
+};
+
+export interface SitemapEntry {
+  path: string;
+  /** Sayfanın içeriği gerçekten değiştiği gün (ISO). Her gün "bugün" yazılmaz: Google tutarsız lastmod'a güvenmeyi bırakır. */
+  lastmod?: string;
+}
+
+/**
+ * Sitenin kendi sayfaları için ayrı harita (v0.1.16): ör. /sitemap-pokedex.xml. `sitemapIndex({ extraMaps })` ile dizine girer.
+ *   export const GET = sitemapPaths({ paths: () => pokedexSitemap() });
+ */
+export const sitemapPaths = (deps: RouteDeps & { paths: () => SitemapEntry[] | Promise<SitemapEntry[]> }) => async () => {
+  const { abs } = ctx(deps);
+  const entries = await deps.paths();
+  return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries.map((e) => `  <url><loc>${xmlEscape(abs(e.path))}</loc>${e.lastmod ? `<lastmod>${xmlEscape(e.lastmod)}</lastmod>` : ""}</url>`).join("\n")}
 </urlset>`);
 };
 
