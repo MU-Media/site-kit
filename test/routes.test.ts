@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createEngineClient } from "../src/client";
-import { adsTxt, indexNowKey, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapPosts, validateNewsletter } from "../src/routes";
+import { adsTxt, indexNowKey, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapIndex, sitemapPaths, sitemapPosts, validateNewsletter } from "../src/routes";
 import type { SiteEnv } from "../src/config";
 
 const env: SiteEnv = { engineUrl: "https://e.test", site: "pokemon", revalidateSecret: "s3cret-uzun", siteUrl: "https://ornek.com" };
@@ -108,6 +108,20 @@ describe("feed'ler", () => {
     expect(body).toContain("<loc>https://ornek.com/haberler</loc>");
     expect(body).toContain("<loc>https://ornek.com/rehberler</loc>");
     expect(body.match(/<loc>https:\/\/ornek\.com\/<\/loc>/g)).toHaveLength(1);
+  });
+  it("sitemap-posts exclude listesindeki yazıyı ve sayfayı haritaya koymaz (v0.1.16)", async () => {
+    const body = await (await sitemapPosts({ ...deps(), extraPaths: ["/haberler"], exclude: ["/tcg/delta", "/haberler"] })()).text();
+    expect(body).not.toContain("/tcg/delta");
+    expect(body).not.toContain("/haberler");
+    expect(body).toContain("https://ornek.com/kategori/tcg");
+  });
+  it("sitemap dizini sitenin ek haritalarını tekrarsız ekler, ek harita lastmod taşır (v0.1.16)", async () => {
+    const idx = await (await sitemapIndex({ ...deps(), extraMaps: ["/sitemap-pokedex.xml", "/sitemap-posts.xml"] })()).text();
+    expect(idx).toContain("<loc>https://ornek.com/sitemap-pokedex.xml</loc>");
+    expect(idx.match(/sitemap-posts\.xml/g)).toHaveLength(1);
+    const map = await (await sitemapPaths({ ...deps(), paths: () => [{ path: "/pokedex", lastmod: "2026-11-21" }, { path: "/pokedex/a&b" }] })()).text();
+    expect(map).toContain("<url><loc>https://ornek.com/pokedex</loc><lastmod>2026-11-21</lastmod></url>");
+    expect(map).toContain("<url><loc>https://ornek.com/pokedex/a&amp;b</loc></url>");
   });
   it("llms.txt: hakkında, sitenin bölümleri, kategori açıklaması, rehberler ve son yazılar ayrı (v0.1.12)", async () => {
     const guide = { ...ART, slug: "grading", title: "Grading nedir", type: "rehber" };
