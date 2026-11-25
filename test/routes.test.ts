@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createEngineClient } from "../src/client";
-import { adsTxt, indexNowKey, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapIndex, sitemapPaths, sitemapPosts, validateNewsletter } from "../src/routes";
+import { adsTxt, atomFeed, indexNowKey, llmsTxt, newsletterProxy, revalidate, rss, robots, secretMatches, sitemapIndex, sitemapPaths, sitemapPosts, validateNewsletter } from "../src/routes";
 import type { SiteEnv } from "../src/config";
 
 const env: SiteEnv = { engineUrl: "https://e.test", site: "pokemon", revalidateSecret: "s3cret-uzun", siteUrl: "https://ornek.com" };
@@ -122,6 +122,27 @@ describe("feed'ler", () => {
     const map = await (await sitemapPaths({ ...deps(), paths: () => [{ path: "/pokedex", lastmod: "2026-11-21" }, { path: "/pokedex/a&b" }] })()).text();
     expect(map).toContain("<url><loc>https://ornek.com/pokedex</loc><lastmod>2026-11-21</lastmod></url>");
     expect(map).toContain("<url><loc>https://ornek.com/pokedex/a&amp;b</loc></url>");
+  });
+  it("v0.1.17: dizinde harita lastmod'u, RSS ve llms.txt exclude, RSS lastBuildDate", async () => {
+    const idx = await (await sitemapIndex({ ...deps(), extraMaps: [{ path: "/sitemap-pokedex.xml", lastmod: () => "2026-11-26" }] })()).text();
+    expect(idx).toContain("<sitemap><loc>https://ornek.com/sitemap-posts.xml</loc><lastmod>2026-09-24T11:00:00Z</lastmod></sitemap>");
+    expect(idx).toContain("<sitemap><loc>https://ornek.com/sitemap-pokedex.xml</loc><lastmod>2026-11-26</lastmod></sitemap>");
+    expect(idx).toContain("<sitemap><loc>https://ornek.com/news-sitemap.xml</loc></sitemap>");
+    const feed = await (await rss({ ...deps(), exclude: ["/tcg/delta"] })()).text();
+    expect(feed).not.toContain("/tcg/delta");
+    const feed2 = await (await rss(deps())()).text();
+    expect(feed2).toContain("<lastBuildDate>Thu, 24 Sep 2026 11:00:00 GMT</lastBuildDate>");
+    const llms = await (await llmsTxt({ ...deps(), exclude: ["/tcg/delta"] })()).text();
+    expect(llms).not.toContain("/tcg/delta");
+  });
+  it("atomFeed: girdiler, self bağlantısı ve en yeni tarih (v0.1.17)", async () => {
+    const xml = await (await atomFeed({ ...deps(), title: "Pokédex <güncel>", path: "/pokedex/atom.xml", entries: () => [{ path: "/pokedex/a", title: "A", updated: "2026-11-20", summary: "2 yeni kart" }, { path: "/pokedex/b", title: "B", updated: "2026-11-26" }] })()).text();
+    expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="tr">');
+    expect(xml).toContain("<title>Pokédex &lt;güncel&gt;</title>");
+    expect(xml).toContain('<link rel="self" type="application/atom+xml" href="https://ornek.com/pokedex/atom.xml"/>');
+    expect(xml).toContain("<updated>2026-11-26T00:00:00Z</updated>");
+    expect(xml).toContain("<summary>2 yeni kart</summary>");
+    expect(xml.match(/<entry>/g)).toHaveLength(2);
   });
   it("llms.txt: hakkında, sitenin bölümleri, kategori açıklaması, rehberler ve son yazılar ayrı (v0.1.12)", async () => {
     const guide = { ...ART, slug: "grading", title: "Grading nedir", type: "rehber" };
