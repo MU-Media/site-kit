@@ -21,9 +21,28 @@ const OPTIONS: sanitizeHtml.IOptions = {
   allowProtocolRelative: false,
 };
 
+/**
+ * Satır başındaki Türkçe sıra sayısı liste sanılmasın (v0.1.17): "9. nesil başlarken…" marked'da `<ol start="9">`
+ * oluyordu. 1'den büyük, küçük harfle devam eden ve önünde bir önceki numaralı madde olmayan satır kaçırılır;
+ * gerçek numaralı listeler (1'den başlar ya da ardışık) dokunulmadan kalır.
+ */
+export function escapeOrdinals(md: string): string {
+  const lines = md.split("\n");
+  return lines
+    .map((line, i) => {
+      const m = /^(\s{0,3})(\d{1,4})\.(\s+)(?=\p{Ll})/u.exec(line);
+      if (!m) return line;
+      const n = Number(m[2]);
+      if (n <= 1) return line;
+      const prev = lines.slice(Math.max(0, i - 8), i).some((l) => new RegExp(`^\\s{0,3}${n - 1}\\.\\s`).test(l));
+      return prev ? line : `${m[1]}${m[2]}\\.${line.slice(m[1]!.length + m[2]!.length + 1)}`;
+    })
+    .join("\n");
+}
+
 /** Pipeline Markdown'ı → güvenli HTML. Dış linkler yeni sekmede (kaynak atfı, nofollow değil). */
 export function renderMarkdown(md: string): string {
-  const html = marked.parse(md, { async: false, gfm: true }) as string;
+  const html = marked.parse(escapeOrdinals(md), { async: false, gfm: true }) as string;
   const clean = sanitizeHtml(html, OPTIONS);
   return (
     clean

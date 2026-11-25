@@ -70,6 +70,8 @@ export function organizationLd(site: PublicSite, siteUrl: string) {
     "@id": absUrl(siteUrl, "/#organization"),
     name: site.organization.name || site.name,
     url: absUrl(siteUrl, "/"),
+    // v0.1.17: kuruluşun ne olduğu varlık şemasında da yazsın (yapay zekâ aramaları markayı buradan tanır)
+    ...(site.description ? { description: site.description } : {}),
     ...(site.organization.logo ? { logo: site.organization.logo.startsWith("http") ? site.organization.logo : absUrl(siteUrl, site.organization.logo) } : {}),
     ...(site.organization.sameAs.length ? { sameAs: site.organization.sameAs } : {}),
   };

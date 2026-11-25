@@ -27,16 +27,27 @@ function ctx(deps: RouteDeps = {}) {
   return { env, client, site, abs: (p: string) => absUrl(env.siteUrl, p) };
 }
 
+/** Dizindeki ek harita: yol ya da yol + son değişiklik günü (v0.1.17) */
+export type ExtraMap = string | { path: string; lastmod?: () => string | undefined | Promise<string | undefined> };
+
 /**
  * /sitemap.xml: yazılar + haber sitemap'i + sitenin kendi haritaları (`extraMaps`, v0.1.16; ör. "/sitemap-pokedex.xml").
  * Ayrı harita Search Console'da bölüm bölüm indeks sayısı verir; engine raporu dizindeki bütün haritaları okur.
+ * v0.1.17: haritalar `<lastmod>` taşır (yazı haritası en son güncellenen yazının günü, ek harita kendi verdiği gün):
+ * Google alt haritayı ne zaman yeniden okuyacağına buna bakarak karar verir.
  */
-export const sitemapIndex = (deps?: RouteDeps & { extraMaps?: string[] }) => async () => {
-  const { abs } = ctx(deps);
-  const maps = [...new Set(["/sitemap-posts.xml", "/news-sitemap.xml", ...(deps?.extraMaps ?? [])])];
+export const sitemapIndex = (deps?: RouteDeps & { extraMaps?: ExtraMap[] }) => async () => {
+  const { client, abs } = ctx(deps);
+  const sm = await orFallback(client.getSitemap(), EMPTY_SITEMAP);
+  const newestPost = sm.articles.map((a) => a.updatedAt).filter(Boolean).sort().pop();
+  const extra = await Promise.all(
+    (deps?.extraMaps ?? []).map(async (m) => (typeof m === "string" ? { path: m, lastmod: undefined } : { path: m.path, lastmod: await m.lastmod?.() })),
+  );
+  const maps = new Map<string, string | undefined>([["/sitemap-posts.xml", newestPost], ["/news-sitemap.xml", undefined]]);
+  for (const e of extra) if (!maps.has(e.path) || e.lastmod) maps.set(e.path, e.lastmod ?? maps.get(e.path));
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${maps.map((m) => `  <sitemap><loc>${abs(m)}</loc></sitemap>`).join("\n")}
+${[...maps].map(([m, lm]) => `  <sitemap><loc>${abs(m)}</loc>${lm ? `<lastmod>${xmlEscape(lm)}</lastmod>` : ""}</sitemap>`).join("\n")}
 </sitemapindex>`);
 };
 
@@ -89,6 +100,50 @@ ${entries.map((e) => `  <url><loc>${xmlEscape(abs(e.path))}</loc>${e.lastmod ? `
 </urlset>`);
 };
 
+export interface AtomEntry {
+  path: string;
+  title: string;
+  /** ISO tarih: içeriğin gerçekten değiştiği an */
+  updated: string;
+  summary?: string;
+}
+
+/**
+ * Sitenin kendi sayfaları için Atom beslemesi (v0.1.17): ör. /pokedex/atom.xml "kartı eklenen Pokédex kayıtları".
+ * Search Console'a site haritası olarak da gönderilebilir (Google RSS/Atom'u harita gibi okur, <updated>'e bakar).
+ *   export const GET = atomFeed({ title: "…", path: "/pokedex/atom.xml", entries: () => recent() });
+ */
+export const atomFeed = (deps: RouteDeps & { title: string; path: string; subtitle?: string; entries: () => AtomEntry[] | Promise<AtomEntry[]> }) => async () => {
+  const { site, abs } = ctx(deps);
+  const [s, entries] = await Promise.all([site(), deps.entries()]);
+  const updated = entries.map((e) => e.updated).sort().pop() ?? new Date(0).toISOString();
+  const iso = (d: string) => (d.length === 10 ? `${d}T00:00:00Z` : new Date(d).toISOString());
+  return xmlResponse(
+    `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="${lang(s.locale)}">
+  <title>${xmlEscape(deps.title)}</title>
+  ${deps.subtitle ? `<subtitle>${xmlEscape(deps.subtitle)}</subtitle>` : ""}
+  <id>${xmlEscape(abs(deps.path))}</id>
+  <link rel="self" type="application/atom+xml" href="${xmlEscape(abs(deps.path))}"/>
+  <link rel="alternate" type="text/html" href="${xmlEscape(abs("/"))}"/>
+  <updated>${iso(updated)}</updated>
+  <author><name>${xmlEscape(s.name)}</name></author>
+${entries
+  .map(
+    (e) => `  <entry>
+    <title>${xmlEscape(e.title)}</title>
+    <id>${xmlEscape(abs(e.path))}#${xmlEscape(e.updated)}</id>
+    <link rel="alternate" type="text/html" href="${xmlEscape(abs(e.path))}"/>
+    <updated>${iso(e.updated)}</updated>
+    ${e.summary ? `<summary>${xmlEscape(e.summary)}</summary>` : ""}
+  </entry>`,
+  )
+  .join("\n")}
+</feed>`,
+    "application/atom+xml",
+  );
+};
+
 /** /news-sitemap.xml: Google News, son 48 saat, en fazla 1000 URL */
 export const newsSitemap = (deps?: RouteDeps & { now?: () => number }) => async () => {
   const { client, site, abs } = ctx(deps);
@@ -114,11 +169,17 @@ ${recent
 </urlset>`);
 };
 
-/** /rss.xml: son 50 yazı */
-export const rss = (deps?: RouteDeps) => async () => {
+/**
+ * /rss.xml: son 50 yazı. v0.1.17: `exclude` ile sitenin noindex verdiği yazılar beslemeye girmez (besleme de
+ * Google'a adres önerir); `<lastBuildDate>` en yeni yazının günü.
+ */
+export const rss = (deps?: RouteDeps & { exclude?: Iterable<string> }) => async () => {
   const { client, site, abs } = ctx(deps);
-  const [s, page] = await Promise.all([site(), orFallback(client.listArticles({ limit: 50 }), EMPTY_PAGE)]);
+  const [s, all] = await Promise.all([site(), orFallback(client.listArticles({ limit: 50 }), EMPTY_PAGE)]);
+  const skip = new Set(deps?.exclude ?? []);
+  const page = { ...all, docs: all.docs.filter((a) => !skip.has(`/${a.category.slug}/${a.slug}`)) };
   const host = new URL(abs("/")).hostname;
+  const built = page.docs.map((a) => a.updatedAt || a.publishedAt).filter(Boolean).sort().pop();
   return xmlResponse(
     `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -127,6 +188,7 @@ export const rss = (deps?: RouteDeps) => async () => {
   <link>${abs("/")}</link>
   <description>${xmlEscape(s.description)}</description>
   <language>${lang(s.locale)}</language>
+  ${built ? `<lastBuildDate>${new Date(built).toUTCString()}</lastBuildDate>` : ""}
   <atom:link href="${abs("/rss.xml")}" rel="self" type="application/rss+xml"/>
   <atom:link href="${WEBSUB_HUB}" rel="hub"/>
 ${page.docs
@@ -175,6 +237,8 @@ export interface LlmsSection {
 export interface LlmsOptions extends RouteDeps {
   /** Sitenin kendi bölümleri (ör. liste sayfaları, yayın ilkeleri); "Hakkında"dan sonra gelir (v0.1.12) */
   sections?: LlmsSection[];
+  /** Listelenmeyecek yazı yolları (v0.1.17): sitenin noindex verdiği yazılar ("/tcg/etb-nedir-pokemon") */
+  exclude?: Iterable<string>;
 }
 
 /** Kalıcı başvuru yazıları (rehber, liste, inceleme): llms.txt'de son yazılardan ayrı listelenir */
@@ -186,7 +250,9 @@ const REFERENCE_TYPES = new Set(["rehber", "liste", "inceleme"]);
  */
 export const llmsTxt = (deps?: LlmsOptions) => async () => {
   const { client, site, abs } = ctx(deps);
-  const [s, page] = await Promise.all([site(), orFallback(client.listArticles({ limit: 50 }), EMPTY_PAGE)]);
+  const [s, all] = await Promise.all([site(), orFallback(client.listArticles({ limit: 50 }), EMPTY_PAGE)]);
+  const skip = new Set(deps?.exclude ?? []);
+  const page = { ...all, docs: all.docs.filter((a) => !skip.has(`/${a.category.slug}/${a.slug}`)) };
   const link = (title: string, path: string, note?: string) => `- [${title}](${abs(path)})${note ? `: ${note}` : ""}`;
   const art = (a: (typeof page.docs)[number]) => link(a.title, `/${a.category.slug}/${a.slug}`, a.meta);
   const guides = page.docs.filter((a) => REFERENCE_TYPES.has(a.type)).slice(0, 20);

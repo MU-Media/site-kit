@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdown, readingMinutes } from "../src/markdown";
+import { escapeOrdinals, renderMarkdown, readingMinutes } from "../src/markdown";
 
 describe("renderMarkdown (sanitize-html, jsdom yok: site-kit#1)", () => {
   it("gfm tablo, başlık, liste ve dış link yeni sekmede", () => {
@@ -13,6 +13,14 @@ describe("renderMarkdown (sanitize-html, jsdom yok: site-kit#1)", () => {
     const html = renderMarkdown('<script>alert(1)</script>\n\n[x](javascript:alert(1))\n\n<img src="https://a/b.png" onerror="alert(1)">\n\n<iframe src="https://kotu"></iframe>');
     expect(html).not.toMatch(/<script|javascript:|onerror|<iframe/i);
     expect(html).toContain('<img src="https://a/b.png"');
+  });
+  it("Türkçe sıra sayısı liste olmaz, gerçek numaralı liste korunur (v0.1.17)", () => {
+    expect(renderMarkdown("Sekizinci nesil bitti.\n\n9. nesil başlarken her şey değişti.")).not.toContain("<ol");
+    expect(renderMarkdown("9. nesil başlarken")).toContain("9. nesil");
+    const list = renderMarkdown("1. kartı çıkar\n2. kılıfa koy\n3. kutuya yerleştir");
+    expect(list).toContain("<ol>");
+    expect(list.match(/<li>/g)).toHaveLength(3);
+    expect(escapeOrdinals("2. Dünya")).toBe("2. Dünya");
   });
   it("okuma süresi en az 1 dk", () => {
     expect(readingMinutes("kısa")).toBe(1);

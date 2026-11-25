@@ -1,5 +1,13 @@
 # Değişiklik günlüğü
 
+## 0.1.17 (26 Kas 2026)
+- `sitemapIndex`: her alt harita `<lastmod>` taşır (yazı haritası en son güncellenen yazının günü); `extraMaps` artık `{ path, lastmod }` da alır.
+- `rss`: `exclude` seçeneği (sitenin noindex verdiği yazılar beslemeye girmez), `<lastBuildDate>`.
+- `llmsTxt`: `exclude` seçeneği.
+- `atomFeed`: sitenin kendi sayfaları için Atom beslemesi (ör. /pokedex/atom.xml); Search Console'a harita olarak da gönderilebilir.
+- `organizationLd`: `description` (site açıklaması).
+- `renderMarkdown`: satır başındaki Türkçe sıra sayısı ("9. nesil başlarken") artık `<ol start="9">` olmuyor; gerçek numaralı listeler korunur.
+
 ## 0.1.16 (21 Kas 2026)
 Tall Grass tarama denetimi: Googlebot 16 Ekim'den beri günde ortalama ~4 HTML sayfası tarıyor; 313 adres "keşfedildi, taranmadı", 79 adres "tarandı, alınmadı". Site haritası Google'a gerçekten istediğimiz adresleri, değiştiği günle söylemeli.
 - `sitemapIndex({ extraMaps })`: sitenin kendi haritaları dizine girer (ör. `/sitemap-pokedex.xml`). Search Console bölüm bölüm indeks sayısı verir; engine'in günlük raporu dizindeki bütün haritaları zaten okur.
