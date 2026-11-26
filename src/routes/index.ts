@@ -18,12 +18,18 @@ export const WEBSUB_HUB = "https://pubsubhubbub.appspot.com/";
 export interface RouteDeps {
   env?: SiteEnv;
   client?: EngineClient;
+  /**
+   * Sitenin kendi site bilgisi (v0.1.18). Site, engine'den gelen adı, açıklamayı ya da kategori açıklamalarını kendi
+   * kodunda düzeltiyorsa (ör. site-pokemon getSite) besleme ve llms.txt de aynı metni kullanır. Verilmezse engine'in
+   * site bilgisi. Engine'deki metin ancak engine web yeniden derlenince değiştiği için bu, iki yüzeyin ayrışmasını önler.
+   */
+  site?: () => Promise<PublicSite>;
 }
 
 function ctx(deps: RouteDeps = {}) {
   const env = deps.env ?? siteEnv();
   const client = deps.client ?? createEngineClient({ engineUrl: env.engineUrl, site: env.site });
-  const site = () => orFallback(client.getSite(), fallbackSite(env.site));
+  const site = deps.site ?? (() => orFallback(client.getSite(), fallbackSite(env.site)));
   return { env, client, site, abs: (p: string) => absUrl(env.siteUrl, p) };
 }
 

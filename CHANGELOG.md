@@ -1,5 +1,8 @@
 # Değişiklik günlüğü
 
+## 0.1.18 (26 Kas 2026)
+- Rota fabrikaları `site` seçeneği alır: sitenin kendi site bilgisi (ör. kendi kodunda düzelttiği açıklama ve kategori açıklamaları). `rss`, `llmsTxt`, `newsSitemap`, `atomFeed` ve `adsTxt` onu kullanır; verilmezse engine'in site bilgisi (eski davranış). Engine'deki metin ancak engine web yeniden derlenince değiştiği için sayfalar ile besleme/llms.txt farklı açıklama gösteriyordu.
+
 ## 0.1.17 (26 Kas 2026)
 - `sitemapIndex`: her alt harita `<lastmod>` taşır (yazı haritası en son güncellenen yazının günü); `extraMaps` artık `{ path, lastmod }` da alır.
 - `rss`: `exclude` seçeneği (sitenin noindex verdiği yazılar beslemeye girmez), `<lastBuildDate>`.

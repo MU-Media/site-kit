@@ -163,6 +163,16 @@ describe("feed'ler", () => {
     expect(body).toContain("## Kategoriler");
     expect(body).not.toContain("## Rehberler ve incelemeler");
   });
+  it("v0.1.18: sitenin kendi site bilgisi verilirse besleme ve llms.txt onun açıklamasını kullanır", async () => {
+    const own = async () => ({ ...SITE, description: "Sitenin kendi açıklaması", categories: [{ slug: "tcg", name: "Kart", description: "kart oyunu" }] });
+    const feed = await (await rss({ ...deps(), site: own })()).text();
+    expect(feed).toContain("<description>Sitenin kendi açıklaması</description>");
+    const llms = await (await llmsTxt({ ...deps(), site: own })()).text();
+    expect(llms).toContain("> Sitenin kendi açıklaması");
+    expect(llms).toContain("- [Kart](https://ornek.com/kategori/tcg): kart oyunu");
+    // verilmezse engine'in açıklaması (eski davranış)
+    expect(await (await rss(deps())()).text()).toContain("<description>d</description>");
+  });
   it("robots yapay zekâ tarayıcılarına açık ve sitemap'i gösterir; ads.txt kimlik yoksa 404", async () => {
     const body = await (await robots(deps())()).text();
     expect(body).toContain("User-agent: ClaudeBot");
